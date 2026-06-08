@@ -1,0 +1,158 @@
+# ==========================================
+# 1. NEXT.JS & NODE.JS
+# ==========================================
+
+# ==========================================
+# 2. PYTHON 
+# ==========================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.toml
+.cache
+.pytest_cache/
+.testmondata
+.coverage
+.coverage.*
+.noscript
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.mutmut-cache
+
+# Jupyter Notebooks (Ignore checkpoint history)
+.ipynb_checkpoints
+
+# Jupyter/IPython configuration
+.ipython/
+
+# Environments (Virtualenv, Conda, Poetry, Pipenv)
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.miniconda/
+.anaconda/
+.conda/
+miniconda*/
+anaconda*/
+.poetry/
+.pipenv/
+
+# Spyder IDE project data
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# Python tools (Mypy, Ruff, Black)
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pyre/
+.pytype/
+
+# ==========================================
+# 3. DATA SCIENCE STORAGE & MODELS
+# ==========================================
+# Large dataset files (Add specific custom extensions if needed)
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pickle
+*.pkl
+*.npy
+*.npz
+
+data/
+scraper/
+models
+
+# Deep Learning / ML model weights
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.pb
+*.weights
+*.bin
+*.json
+model_snapshots/
+
+# ==========================================
+# 4. ENVIRONMENT VARIABLES & SECRETS 
+# ==========================================
+# Next.js local env files
+.env*.local
+
+# Python local env files
+.env
+.env.dev
+.env.prod
+.env.secrets
+
+# Keep env template files trackable
+!.env.example
+!.env.template
+
+# ==========================================
+# 5. OS & IDE (VS Code / WebStorm / macOS)
+# ==========================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Ehthumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
