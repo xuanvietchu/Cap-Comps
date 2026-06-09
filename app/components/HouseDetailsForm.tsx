@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 import {
   HouseDetails,
@@ -104,7 +104,7 @@ export default function HouseDetailsForm({
     }));
   }
 
-  async function submitForm(e: React.FormEvent) {
+  async function submitForm(e: FormEvent) {
     e.preventDefault();
     setSubmitError("");
 
@@ -140,20 +140,23 @@ export default function HouseDetailsForm({
   }
 
   return (
-    <form onSubmit={submitForm} className="flex-1 overflow-y-auto p-8">
+    <form
+      onSubmit={submitForm}
+      className="flex-1 overflow-y-auto bg-slate-950/60 p-6 sm:p-8"
+    >
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold text-white">
             {page === 1 ? "House Details" : "Search Constraints"}
           </h2>
 
-          <p className="text-gray-400">Page {page} of 2</p>
+          <p className="text-slate-400">Page {page} of 2</p>
         </div>
 
         <button
           type="button"
           onClick={onCancel}
-          className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
         >
           Cancel
         </button>
@@ -161,7 +164,7 @@ export default function HouseDetailsForm({
 
       {page === 1 ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <TextInput
               label="address"
               value={details.address}
@@ -271,7 +274,7 @@ export default function HouseDetailsForm({
               label="basement2_status"
               value={details.L_basement2_status}
               options={basement2StatusOptions}
-              onChange={(v) => updateField("L_basement1_status", v)}
+              onChange={(v) => updateField("L_basement2_status", v)}
             />
           </div>
 
@@ -319,10 +322,10 @@ export default function HouseDetailsForm({
         </div>
       ) : (
         <div>
-          <div className="mb-6 rounded-xl border border-blue-900 bg-blue-950/40 p-4">
-            <h3 className="font-semibold mb-2">Search constraints</h3>
+          <div className="mb-6 rounded-2xl border border-amber-400/15 bg-amber-400/8 p-4">
+            <h3 className="mb-2 font-semibold text-white">Search constraints</h3>
 
-            <p className="text-gray-300">
+            <p className="text-slate-300">
               The agent will search for homes within about{" "}
               <span className="font-semibold text-white">
                 {details.maxDistanceKm} kilometers
@@ -339,7 +342,7 @@ export default function HouseDetailsForm({
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <NumberInput
               label="maxDistanceKm"
               value={details.maxDistanceKm}
@@ -361,7 +364,7 @@ export default function HouseDetailsForm({
         </div>
       )}
       {submitError && (
-        <div className="mt-6 rounded-xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+        <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-200">
           {submitError}
         </div>
       )}
@@ -371,7 +374,7 @@ export default function HouseDetailsForm({
           type="button"
           disabled={page === 1}
           onClick={() => setPage(1)}
-          className="bg-gray-800 hover:bg-gray-700 disabled:opacity-40 px-6 py-3 rounded-xl font-semibold"
+          className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -379,7 +382,7 @@ export default function HouseDetailsForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-6 py-3 rounded-xl font-semibold"
+          className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-3 font-semibold text-slate-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting
             ? "Checking address..."

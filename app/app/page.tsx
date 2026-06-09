@@ -2,13 +2,8 @@ import AgentChat from "../components/AgentChat";
 
 export default function AgentPage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">House Comps Agent</h1>
-        <p className="text-gray-400 mb-6">
-          Ask for comparable sold properties and valuation support
-        </p>
-
+    <main className="h-screen w-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(255,255,255,0.08),_transparent_24%),linear-gradient(180deg,_#04070f_0%,_#09111f_60%,_#02040a_100%)] text-white">
+      <div className="h-full w-full overflow-hidden">
         <AgentChat />
       </div>
     </main>

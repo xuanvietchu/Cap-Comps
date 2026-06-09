@@ -9,12 +9,12 @@ export function TextInput({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs text-gray-300 mb-1">{label}</span>
+      <span className="mb-1 block text-xs text-slate-300">{label}</span>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 outline-none text-sm"
+        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-amber-400/40 focus:bg-white/8"
       />
     </label>
   );
@@ -31,13 +31,13 @@ export function NumberInput({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs text-gray-300 mb-1">{label}</span>
+      <span className="mb-1 block text-xs text-slate-300">{label}</span>
       <input
         type="number"
         step="any"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 outline-none text-sm"
+        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-amber-400/40 focus:bg-white/8"
       />
     </label>
   );
@@ -56,11 +56,11 @@ export function SelectInput({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs text-gray-300 mb-1">{label}</span>
+      <span className="mb-1 block text-xs text-slate-300">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 outline-none text-sm"
+        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-amber-400/40 focus:bg-white/8"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -93,7 +93,7 @@ export function MultiSelectField({
 
   return (
     <div>
-      <p className="text-sm text-gray-300 mb-2">{label}</p>
+      <p className="mb-2 text-sm text-slate-300">{label}</p>
 
       <div className="flex flex-wrap gap-2">
         {values.map((value) => (
@@ -101,10 +101,10 @@ export function MultiSelectField({
             key={value}
             type="button"
             onClick={() => toggle(value)}
-            className={`px-3 py-2 rounded-xl text-sm border ${
+            className={`rounded-xl border px-3 py-2 text-sm transition ${
               selected.includes(value)
-                ? "bg-blue-600 border-blue-500 text-white"
-                : "bg-gray-800 border-gray-700 text-gray-300"
+                ? "border-amber-400/30 bg-amber-400/15 text-amber-50"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/8"
             }`}
           >
             {value}
@@ -130,14 +130,14 @@ export function SearchableInput({
 
   return (
     <label className="block">
-      <span className="block text-xs text-gray-300 mb-1">{label}</span>
+      <span className="mb-1 block text-xs text-slate-300">{label}</span>
 
       <input
         type="text"
         list={listId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 outline-none text-sm"
+        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-amber-400/40 focus:bg-white/8"
       />
 
       <datalist id={listId}>

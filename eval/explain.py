@@ -1,3 +1,4 @@
+# python -m eval.explain
 from pathlib import Path
 import argparse
 
@@ -29,6 +30,123 @@ def load_xy(csv_path):
 
     return X, y
 
+def get_leaf_indices(model, X):
+    return model.predict(X, pred_leaf=True)
+
+
+def trace_tree_path(tree, row, feature_names):
+    node = tree["tree_structure"]
+    path = []
+
+    while "leaf_index" not in node:
+        feat_idx = node["split_feature"]
+        feat = feature_names[feat_idx]
+        threshold = node["threshold"]
+        decision_type = node.get("decision_type", "<=")
+        value = row.iloc[feat_idx]
+
+        if pd.isna(value):
+            go_left = node.get("default_left", True)
+            decision = "missing"
+        elif decision_type == "<=":
+            go_left = value <= threshold
+            decision = f"{value:.4f} <= {threshold:.4f}"
+        else:
+            go_left = value == threshold
+            decision = f"{value} == {threshold}"
+
+        path.append({
+            "feature": feat,
+            "value": value,
+            "threshold": threshold,
+            "decision_type": decision_type,
+            "decision": decision,
+            "go": "left" if go_left else "right",
+        })
+
+        node = node["left_child"] if go_left else node["right_child"]
+
+    return path, node["leaf_index"]
+
+
+def compare_leaf_similarity(model, X, idx_a, idx_b):
+    leaves = get_leaf_indices(model, X)
+
+    leaves_a = leaves[idx_a]
+    leaves_b = leaves[idx_b]
+
+    same_tree_mask = leaves_a == leaves_b
+    same_count = same_tree_mask.sum()
+    total_trees = len(leaves_a)
+
+    return {
+        "same_count": same_count,
+        "total_trees": total_trees,
+        "similarity": same_count / total_trees,
+        "same_tree_indices": np.where(same_tree_mask)[0],
+        "diff_tree_indices": np.where(~same_tree_mask)[0],
+        "leaves_a": leaves_a,
+        "leaves_b": leaves_b,
+    }
+
+
+def print_decision_path_comparison(model, X, idx_a, idx_b, max_trees=5):
+    result = compare_leaf_similarity(model, X, idx_a, idx_b)
+
+    print("\nLeaf Similarity")
+    print("---------------")
+    print(f"House A index: {idx_a}")
+    print(f"House B index: {idx_b}")
+    print(
+        f"Shared leaves: {result['same_count']} / {result['total_trees']} "
+        f"({result['similarity'] * 100:.2f}%)"
+    )
+
+    booster_dump = model.booster_.dump_model()
+    trees = booster_dump["tree_info"]
+    feature_names = list(X.columns)
+
+    tree_indices = list(result["same_tree_indices"][:max_trees])
+
+    if len(tree_indices) == 0:
+        print("\nNo shared-leaf trees found. Showing first different trees instead.")
+        tree_indices = list(result["diff_tree_indices"][:max_trees])
+
+    for tree_idx in tree_indices:
+        tree = trees[tree_idx]
+
+        path_a, leaf_a = trace_tree_path(
+            tree,
+            X.iloc[idx_a],
+            feature_names,
+        )
+
+        path_b, leaf_b = trace_tree_path(
+            tree,
+            X.iloc[idx_b],
+            feature_names,
+        )
+
+        print("\n" + "=" * 80)
+        print(f"Tree {tree_idx}")
+        print(f"House A leaf: {leaf_a}")
+        print(f"House B leaf: {leaf_b}")
+        print(f"Same leaf: {leaf_a == leaf_b}")
+
+        print("\nHouse A decision path:")
+        for step in path_a:
+            print(
+                f"  {step['feature']}: {step['decision']} "
+                f"-> {step['go']}"
+            )
+
+        print("\nHouse B decision path:")
+        for step in path_b:
+            print(
+                f"  {step['feature']}: {step['decision']} "
+                f"-> {step['go']}"
+            )
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -45,6 +163,8 @@ def main():
         type=int,
         default=10,
     )
+    parser.add_argument("--compare-idx", type=int, default=11)
+    parser.add_argument("--top-path-trees", type=int, default=10)
     args = parser.parse_args()
 
     bundle = joblib.load(args.model_path)
@@ -60,6 +180,7 @@ def main():
     model = quantile_model.models_[0.50]
 
     explainer = shap.TreeExplainer(model)
+    X = X.drop(columns=["address"])
     shap_values = explainer.shap_values(X)
 
     shap.summary_plot(shap_values, X)
@@ -147,6 +268,21 @@ def main():
         data=X.iloc[house_idx],
         feature_names=X.columns,
     )
+
+    if args.compare_idx is not None:
+        if args.compare_idx >= len(X):
+            raise ValueError(
+                f"compare_idx={args.compare_idx} is out of range. "
+                f"Dataset only has {len(X)} rows."
+            )
+
+        print_decision_path_comparison(
+            model=model,
+            X=X,
+            idx_a=args.house_idx,
+            idx_b=args.compare_idx,
+            max_trees=args.top_path_trees,
+        )
 
     shap.plots.waterfall(explanation)
 

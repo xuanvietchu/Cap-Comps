@@ -1,4 +1,4 @@
-import { HouseDetails } from "./HouseDetailsForm";
+import { HouseDetails } from "./houseDetails";
 
 type Conversation = {
   id: string;
@@ -11,38 +11,52 @@ export default function ChatSidebar({
   activeId,
   onNewChat,
   onSelectChat,
+  onDeleteChat,
 }: {
   conversations: Conversation[];
   activeId: string | null;
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
+  onDeleteChat: (id: string) => void;
 }) {
   return (
-    <aside className="w-72 border-r border-gray-800 bg-gray-950 p-4 flex flex-col">
+    <aside className="flex h-full min-h-0 w-72 flex-col border-r border-white/10 bg-[#0f172a] p-3 sm:p-4">
       <button
         onClick={onNewChat}
-        className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl px-4 py-3 font-semibold mb-4"
+        className="mb-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left font-semibold text-white transition hover:bg-white/10"
       >
         + New Chat
       </button>
 
-      <div className="space-y-2 overflow-y-auto">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {conversations.map((conv) => (
-          <button
+          <div
             key={conv.id}
-            onClick={() => onSelectChat(conv.id)}
-            className={`w-full text-left p-3 rounded-xl ${
+            className={`w-full rounded-2xl p-3 transition ${
               conv.id === activeId
-                ? "bg-gray-800 text-white"
-                : "text-gray-400 hover:bg-gray-900"
+                ? "border border-white/10 bg-white/10 text-white"
+                : "border border-transparent text-slate-300 hover:bg-white/5"
             }`}
           >
-            <div className="font-medium truncate">{conv.title}</div>
-            <div className="text-xs text-gray-500 truncate">
-              {conv.houseDetails.assessmentClass} ·{" "}
-              {conv.houseDetails.houseStyle}
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => onSelectChat(conv.id)}
+              className="w-full text-left"
+            >
+              <div className="truncate font-medium">{conv.title}</div>
+              <div className="truncate text-xs text-slate-400">
+                {conv.houseDetails.assessmentClass} / {conv.houseDetails.houseStyle}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onDeleteChat(conv.id)}
+              className="mt-3 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              Delete chat
+            </button>
+          </div>
         ))}
       </div>
     </aside>
