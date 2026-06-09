@@ -25,7 +25,7 @@ def main():
     df = pd.read_csv(args.data_path)
 
     y_true = df[TARGET_COL].astype(float)
-    X_raw = df.drop(columns=[TARGET_COL])
+    X_raw = df.drop(columns=[TARGET_COL, "address"])
 
     feature_pipeline = pipeline[:-1]
     quantile_model = pipeline.named_steps["model"]

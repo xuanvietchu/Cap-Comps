@@ -157,7 +157,7 @@ def default_lgbm_params() -> dict:
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "reg_lambda": 3.0,
-        "random_state": 42,
+        "random_state": 101,
         "n_jobs": -1,
         "verbose": -1,
     }
@@ -215,10 +215,12 @@ def make_pipeline() -> Pipeline:
 
 def train(data_path: str | Path, model_path: str | Path):
     raw_df = pd.read_csv(data_path)
+    df_address = raw_df["address"]
 
     # Apply cleaning once before splitting so rows filtered by assessmentClass do not break alignment.
     cleaner = DataCleaner()
     cleaned_df = cleaner.fit_transform(raw_df)
+    cleaned_df["address"] = df_address
 
     train_df, valid_df, test_df = split_by_time(cleaned_df)
 
@@ -231,6 +233,10 @@ def train(data_path: str | Path, model_path: str | Path):
     train_df.to_csv("./data/train/train.csv", index=False)
     valid_df.to_csv("./data/valid/valid.csv", index=False)
     test_df.to_csv("./data/test/test.csv", index=False)
+
+    train_df = train_df.drop(columns=["address"])
+    valid_df = valid_df.drop(columns=["address"])
+    test_df = test_df.drop(columns=["address"])
 
     X_train, y_train = prepare_xy(train_df)
     X_valid, y_valid = prepare_xy(valid_df)

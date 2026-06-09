@@ -2,7 +2,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
 
 from api.config import GOOGLE_API_KEY, MODEL_NAME
-from api.tools.comps_tools import get_matches_by_period, get_current_date
+from api.tools.comps_tools import get_matches_by_period
 
 
 SYSTEM_PROMPT = SYSTEM_PROMPT = """
@@ -125,15 +125,7 @@ Do not expose it to the user.
 CONFIDENCE SCORING
 ──────────────────────────────────────────────
 
-Assign an internal confidence score:
-
-1.00 = all required information present
-0.80 = minor ambiguity resolved
-0.50 = important ambiguity
-0.00 = missing required inputs
-
-If confidence < 0.80,
-ask a clarification question instead of calling tools.
+Nothing Yet
 
 ──────────────────────────────────────────────
 RESPONSE FORMAT
@@ -172,6 +164,6 @@ llm = ChatGoogleGenerativeAI(
 
 agent = create_agent(
     model=llm,
-    tools=[get_matches_by_period, get_current_date],
+    tools=[get_matches_by_period],
     system_prompt=SYSTEM_PROMPT,
 )

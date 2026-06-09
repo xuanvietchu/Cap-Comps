@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import ChatSidebar from "./ChatSidebar";
+import HouseDetailsForm from "./HouseDetailsForm";
+import { HouseDetails } from "./houseDetails";
 
 type Message = {
   role: "user" | "agent";
@@ -14,44 +17,109 @@ type Comp = {
   sold_date: string;
   distance_km: number;
   similarity_score: number;
-  living_area?: number;
-  bedrooms?: number;
-  bathrooms?: number;
   reasons?: string[];
 };
 
-export default function AgentChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "agent",
-      content:
-        "Hi, I can help find house comps. Try: Find comps for 11153 52 Street NW, Edmonton.",
-    },
-  ]);
+type Conversation = {
+  id: string;
+  title: string;
+  houseDetails: HouseDetails;
+  messages: Message[];
+};
 
+export default function AgentChat() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingConversationId, setEditingConversationId] = useState<
+    string | null
+  >(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const activeConversation = conversations.find((c) => c.id === activeId);
+
+  function handleNewChat() {
+    setActiveId(null);
+    setShowForm(true);
+  }
+
+  function handleCancelForm() {
+    setShowForm(false);
+  }
+
+  function handleCreateChat(houseDetails: HouseDetails) {
+    const id = crypto.randomUUID();
+
+    const newConversation: Conversation = {
+      id,
+      title: houseDetails.address || "New Comps Search",
+      houseDetails,
+      messages: [
+        {
+          role: "agent",
+          content:
+            "House details saved. Ask me to find comps, explain valuation support, or compare market context.",
+        },
+      ],
+    };
+
+    setConversations((prev) => [newConversation, ...prev]);
+    setActiveId(id);
+    setShowForm(false);
+  }
+
+  function handleSaveHouseDetails(details: HouseDetails) {
+    if (editingConversationId) {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === editingConversationId
+            ? {
+                ...conv,
+                title: details.neighbourhoodName || conv.title,
+                houseDetails: details,
+              }
+            : conv,
+        ),
+      );
+
+      setShowForm(false);
+      setEditingConversationId(null);
+      return;
+    }
+
+    handleCreateChat(details);
+  }
+
   async function sendMessage() {
-    if (!input.trim()) return;
+    if (!input.trim() || !activeConversation) return;
+
+    const messageToSend = input;
 
     const userMessage: Message = {
       role: "user",
-      content: input,
+      content: messageToSend,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.id === activeConversation.id
+          ? { ...conv, messages: [...conv.messages, userMessage] }
+          : conv,
+      ),
+    );
+
     setInput("");
     setLoading(true);
 
     try {
       const res = await fetch("http://localhost:8000/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input,
+          message: messageToSend,
+          house_details: activeConversation.houseDetails,
+          conversation_id: activeConversation.id,
         }),
       });
 
@@ -63,67 +131,144 @@ export default function AgentChat() {
         comps: data.comps ?? [],
       };
 
-      setMessages((prev) => [...prev, agentMessage]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "agent",
-          content: "Error connecting to the agent backend.",
-        },
-      ]);
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === activeConversation.id
+            ? { ...conv, messages: [...conv.messages, agentMessage] }
+            : conv,
+        ),
+      );
+    } catch {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === activeConversation.id
+            ? {
+                ...conv,
+                messages: [
+                  ...conv.messages,
+                  {
+                    role: "agent",
+                    content: "Error connecting to the agent backend.",
+                  },
+                ],
+              }
+            : conv,
+        ),
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-      <div className="h-[600px] overflow-y-auto p-5 space-y-5">
-        {messages.map((msg, index) => (
-          <div key={index}>
-            <div
-              className={`max-w-3xl rounded-xl p-4 ${
-                msg.role === "user"
-                  ? "ml-auto bg-blue-600"
-                  : "mr-auto bg-gray-800"
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+    <div className="h-[700px] bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex">
+      <ChatSidebar
+        conversations={conversations}
+        activeId={activeId}
+        onNewChat={handleNewChat}
+        onSelectChat={(id) => {
+          setActiveId(id);
+          setShowForm(false);
+        }}
+      />
+
+      <section className="flex-1 flex flex-col">
+        {showForm ? (
+          <HouseDetailsForm
+            initialDetails={
+              editingConversationId
+                ? conversations.find((c) => c.id === editingConversationId)
+                    ?.houseDetails
+                : undefined
+            }
+            onSubmit={handleSaveHouseDetails}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingConversationId(null);
+            }}
+          />
+        ) : activeConversation ? (
+          <>
+            <div className="border-b border-gray-800 p-4 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">{activeConversation.title}</h2>
+                <p className="text-sm text-gray-400">
+                  {activeConversation.houseDetails.bedroomsCount} bed ·{" "}
+                  {activeConversation.houseDetails.bathroomsCount} bath ·{" "}
+                  {activeConversation.houseDetails.livingArea} sqft
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingConversationId(activeConversation.id);
+                  setShowForm(true);
+                }}
+                className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl text-sm"
+              >
+                Edit Details
+              </button>
             </div>
 
-            {msg.comps && msg.comps.length > 0 && (
-              <CompsTable comps={msg.comps} />
-            )}
-          </div>
-        ))}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {activeConversation.messages.map((msg, index) => (
+                <div key={index}>
+                  <div
+                    className={`max-w-3xl rounded-xl p-4 ${
+                      msg.role === "user"
+                        ? "ml-auto bg-blue-600"
+                        : "mr-auto bg-gray-800"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </div>
 
-        {loading && (
-          <div className="bg-gray-800 rounded-xl p-4 w-fit">
-            Finding comps...
+                  {msg.comps && msg.comps.length > 0 && (
+                    <CompsTable comps={msg.comps} />
+                  )}
+                </div>
+              ))}
+
+              {loading && (
+                <div className="bg-gray-800 rounded-xl p-4 w-fit">
+                  Finding comps...
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-800 p-4 flex gap-3">
+              <input
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none"
+                placeholder="Ask about comps, valuation, or market context..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    sendMessage();
+                  }
+                }}
+              />
+
+              <button
+                onClick={sendMessage}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-6 py-3 rounded-xl font-semibold"
+              >
+                Send
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-center text-gray-400">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                House Comps Agent
+              </h2>
+              <p>Start a new chat to enter house details.</p>
+            </div>
           </div>
         )}
-      </div>
-
-      <div className="border-t border-gray-800 p-4 flex gap-3">
-        <input
-          className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none"
-          placeholder="Ask: Find comps for an address..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage();
-          }}
-        />
-
-        <button
-          onClick={sendMessage}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-6 py-3 rounded-xl font-semibold"
-        >
-          Send
-        </button>
-      </div>
+      </section>
     </div>
   );
 }
