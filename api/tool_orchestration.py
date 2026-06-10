@@ -30,6 +30,7 @@ def safe_int(value: Any, default: int) -> int:
 
 
 def normalize_comp_count(value: Any) -> int:
+    """Coerce requested comp count to a positive integer with a demo-friendly default."""
     return max(1, safe_int(value, 15))
 
 
@@ -40,6 +41,7 @@ def invoke_agent_tool(
     trace_events: list[dict[str, Any]],
     internal_cache: dict[str, Any],
 ) -> Any:
+    """Map approved agent tool names to deterministic backend functions."""
     if name in PROPERTY_TOOLS and house_details is None:
         result = {"error": "house_details_missing"}
         trace(trace_events, "tool", f"{name} skipped because house details are missing", result)
@@ -79,6 +81,7 @@ def invoke_agent_tool(
 
 
 def collect_analysis(tool_results: dict[str, Any], fallback_analysis: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Merge fresh tool outputs with the previous analysis for follow-up turns."""
     analysis = dict(fallback_analysis or {})
 
     prediction = tool_results.get("PREDICT_PRICE")
@@ -100,6 +103,7 @@ def collect_analysis(tool_results: dict[str, Any], fallback_analysis: dict[str, 
 
 
 def build_explanation_payload(tool_results: dict[str, Any]) -> dict[str, Any] | None:
+    """Shape explanation tool output for the frontend without leaking raw internals."""
     payload: dict[str, Any] = {}
     price_explanation = tool_results.get("EXPLAIN_PRICE")
     if isinstance(price_explanation, dict) and "error" not in price_explanation:
@@ -112,6 +116,7 @@ def build_explanation_payload(tool_results: dict[str, Any]) -> dict[str, Any] | 
 
 
 def build_display_options(intent_analysis: dict[str, Any], tool_results: dict[str, Any]) -> dict[str, bool]:
+    """Tell the frontend which rich result panels are relevant for this turn."""
     intent = intent_analysis.get("intent")
     planned_tools = set(intent_analysis.get("planned_tools") or [])
     return {

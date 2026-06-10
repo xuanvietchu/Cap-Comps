@@ -25,7 +25,7 @@ export default function ChatSidebar({
         onClick={onNewChat}
         className="mb-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left font-semibold text-white transition hover:bg-white/10"
       >
-        + New Chat
+        New Chat
       </button>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">

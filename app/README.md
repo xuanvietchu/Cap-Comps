@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KV-Capital Frontend
 
-## Getting Started
+This is the Next.js chat interface for KV-Capital. It lets users create a subject-property conversation, stream backend agent events, inspect valuation/comps results, parse property PDFs, and export comps as CSV.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Install dependencies:
+
+```powershell
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the development server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open:
 
-## Learn More
+```text
+http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+The backend must also be running at:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+http://localhost:8000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+To point the frontend at a deployed or non-local backend, create `app/.env.local`:
 
-## Deploy on Vercel
+```env
+NEXT_PUBLIC_API_BASE_URL=https://your-api-host.example
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key Files
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/page.tsx`: full-screen application shell.
+- `components/AgentChat.tsx`: conversation state, streaming chat call, CSV export handling.
+- `components/HouseDetailsForm.tsx`: subject-property form and PDF extraction flow.
+- `components/agent-chat/`: chat header, input, message list, result cards, and shared types.
+
+## Scripts
+
+```powershell
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
+
+## Backend Contract
+
+The frontend sends chat requests to `POST /chat/stream` and expects newline-delimited JSON events:
+
+```json
+{ "type": "trace", "event": { "phase": "tool", "message": "Calling GET_COMPS" } }
+{ "type": "final", "response": { "answer": "...", "comps": [] } }
+```
+
+See `../docs/API.md` for the full API reference.

@@ -10,6 +10,7 @@ from api.tools.tool_utils import format_feature_value
 
 
 def predict_interval_from_frame(frame: pd.DataFrame) -> dict[str, float]:
+    """Return low, median, and high price estimates from the saved pipeline."""
     bundle = load_bundle()
     pipeline = bundle["pipeline"]
     model = pipeline.named_steps["model"]
@@ -35,6 +36,7 @@ def predict_interval_from_frame(frame: pd.DataFrame) -> dict[str, float]:
 
 
 def predict_house_price(details: dict[str, Any]) -> dict[str, Any]:
+    """Predict price band and derive confidence from interval width."""
     frame = build_model_frame(details)
     interval = predict_interval_from_frame(frame)
     midpoint = max(interval["mid"], 1.0)
@@ -59,6 +61,7 @@ def predict_house_price(details: dict[str, Any]) -> dict[str, Any]:
 
 
 def explain_house_price(details: dict[str, Any], top_n: int = 5) -> dict[str, Any]:
+    """Explain the estimate by returning strongest positive and negative drivers."""
     frame = build_model_frame(details)
     bundle = load_bundle()
     transformed = bundle["pipeline"][:-1].transform(frame)

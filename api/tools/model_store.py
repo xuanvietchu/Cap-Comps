@@ -25,6 +25,7 @@ from train.train_house_price_pipeline import DataCleaner, LogFeatureEngineer, Mu
 
 @lru_cache(maxsize=1)
 def ensure_legacy_pickle_classes() -> None:
+    """Expose training classes under __main__ so older joblib artifacts load."""
     main_mod = sys.modules.get("__main__")
     if main_mod is None:
         return
@@ -41,6 +42,7 @@ def ensure_legacy_pickle_classes() -> None:
 
 @lru_cache(maxsize=1)
 def load_bundle() -> dict[str, Any]:
+    """Load and cache the trained pipeline bundle from models/."""
     ensure_legacy_pickle_classes()
     return joblib.load(MODEL_PATH)
 
@@ -67,6 +69,7 @@ def current_close_date_days() -> int:
 
 
 def build_model_frame(details: dict[str, Any]) -> pd.DataFrame:
+    """Convert sparse form details into the exact column order the model expects."""
     data = {}
     for col in model_columns():
         if col == "closeDate_days":
@@ -96,6 +99,7 @@ def quantile_model():
 
 @lru_cache(maxsize=1)
 def price_shap_explainer():
+    """Create the cached tree explainer used for price-driver explanations."""
     return shap.TreeExplainer(quantile_model())
 
 

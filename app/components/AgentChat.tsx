@@ -22,6 +22,19 @@ import EmptyChatState from "./agent-chat/EmptyChatState";
 import HouseDetailsForm from "./HouseDetailsForm";
 import { HouseDetails } from "./houseDetails";
 
+function backendUrl(path: string) {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (configuredUrl) {
+    return `${configuredUrl.replace(/\/$/, "")}${path}`;
+  }
+
+  const host =
+    typeof window === "undefined" || !window.location.hostname
+      ? "localhost"
+      : window.location.hostname;
+  return `http://${host}:8000${path}`;
+}
+
 export default function AgentChat() {
   const [conversations, setConversations] = useState<Conversation[]>(() =>
     loadStoredConversations(),
@@ -156,6 +169,7 @@ export default function AgentChat() {
   }
 
   async function sendMessage() {
+    // Stream trace events first, then replace the pending message with the final payload.
     if (!input.trim() || !activeConversation) return;
 
     const messageToSend = input.trim();
@@ -193,7 +207,7 @@ export default function AgentChat() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/chat/stream", {
+      const res = await fetch(backendUrl("/chat/stream"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

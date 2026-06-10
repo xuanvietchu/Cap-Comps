@@ -37,12 +37,15 @@ from api.tool_orchestration import (
 
 @dataclass
 class AgentRunResult:
+    """Internal result from one agent turn before it is shaped for the API."""
+
     answer: str
     tool_results: dict[str, Any]
     intent_analysis: dict[str, Any]
 
 
 def _extract_requested_comp_count(message: str) -> int | None:
+    """Pull explicit comp counts from natural language before tool execution."""
     patterns = [
         r"\b(?:top|best|first|nearest|closest)\s+(\d{1,4})\s+(?:comps?|comparables?|properties|homes)\b",
         r"\b(?:show|find|get|return|give|list)\s+(?:me\s+)?(\d{1,4})\s+(?:comps?|comparables?|properties|homes)\b",
@@ -61,6 +64,7 @@ def _analyze_intent(
     state: ConversationState,
     trace_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    """Ask Gemini for a compact routing decision before tools are available."""
     context = {
         "user_message": message,
         "subject_property_summary": format_house_summary(house_details),
@@ -122,6 +126,7 @@ def _build_agent_prompt_context(
     house_details: dict[str, Any] | None,
     state: ConversationState,
 ) -> dict[str, Any]:
+    """Bundle subject, conversation, and prior analysis context for the tool agent."""
     return {
         "user_message": message,
         "subject_property_summary": format_house_summary(house_details),
@@ -172,6 +177,7 @@ def _run_tool_call(
     trace_events: list[dict[str, Any]],
     internal_cache: dict[str, Any],
 ) -> list[dict[str, Any]]:
+    """Execute one Gemini tool call, including required dependency tools."""
     name = call.get("name", "")
     args = call.get("args") or {}
     requested_comp_count = intent_analysis.get("requested_comp_count")
@@ -220,6 +226,7 @@ def _gemini_agent_response(
     state: ConversationState,
     trace_events: list[dict[str, Any]],
 ) -> AgentRunResult:
+    """Run the intent pass, tool loop, and final-answer pass for one message."""
     intent_analysis = _analyze_intent(message, house_details, state, trace_events)
     if is_export_request(message):
         intent_analysis = {
@@ -304,6 +311,7 @@ def build_response(
     conversation_history: list[dict[str, Any]] | None = None,
     trace_sink=None,
 ) -> dict[str, Any]:
+    """Build the public chat response and update in-memory conversation state."""
     conversation_id = conversation_id or "default"
     state = CONVERSATIONS.setdefault(conversation_id, ConversationState())
     hydrate_conversation_history(state, conversation_history)

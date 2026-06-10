@@ -12,6 +12,7 @@ from api.tools.tool_utils import DATE_ORIGIN, haversine_km, parse_float, safe_st
 
 
 def infer_search_constraints(details: dict[str, Any]) -> dict[str, float]:
+    """Read user-supplied comp search tolerances or fall back to defaults."""
     return {
         "maxDistanceKm": parse_float(details.get("maxDistanceKm"), 3.0) or 3.0,
         "sqftTolerancePct": parse_float(details.get("sqftTolerancePct"), 25.0) or 25.0,
@@ -35,6 +36,7 @@ def price_per_sqft_similarity(subject_ppsf: float | None, candidate_ppsf: float 
 
 
 def leaf_similarity_score(subject_details: dict[str, Any], candidate_details: dict[str, Any]) -> dict[str, float]:
+    """Compare LightGBM leaf paths as a model-native similarity signal."""
     subject_frame = transform_for_model(subject_details)
     candidate_frame = transform_for_model(candidate_details)
     booster = quantile_model().booster_
@@ -59,6 +61,7 @@ def leaf_similarity_score(subject_details: dict[str, Any], candidate_details: di
 
 
 def candidate_pool(subject: dict[str, Any]) -> pd.DataFrame:
+    """Filter sold properties to a plausible neighborhood, size, and age pool."""
     df = load_dataset().copy()
     constraints = infer_search_constraints(subject)
 
@@ -132,6 +135,7 @@ def score_candidate(
     subject_price: float | None,
     subject_ppsf: float | None,
 ) -> dict[str, Any]:
+    """Score one candidate using model leaf overlap and price-per-square-foot fit."""
     leaf_similarity = leaf_similarity_score(subject, candidate_row)
     distance_km = parse_float(candidate_row.get("distance_km"))
     sold_date = None
@@ -167,6 +171,7 @@ def score_candidate(
 
 
 def rank_comps_with_details(subject: dict[str, Any], top_n: int = 15) -> list[dict[str, Any]]:
+    """Return top comps with raw candidate details retained for explanation/export."""
     pool = candidate_pool(subject)
     if pool.empty:
         return []

@@ -41,6 +41,7 @@ type ParsedHouseDetailsResponse = {
 };
 
 async function geocodeEdmontonAddress(address: string) {
+  // Coordinates anchor distance-based comp filtering, so keep geocoding Edmonton-scoped.
   const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(
     address,
   )}`;
@@ -84,6 +85,7 @@ async function geocodeEdmontonAddress(address: string) {
 }
 
 function fileToBase64(file: File) {
+  // FastAPI receives PDFs as JSON, so the browser strips the data URL prefix.
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -96,6 +98,7 @@ function fileToBase64(file: File) {
 }
 
 function backendUrl(path: string) {
+  // Allow deployed demos to point at a hosted API without changing component code.
   const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (configuredUrl) {
     return `${configuredUrl.replace(/\/$/, "")}${path}`;
@@ -161,6 +164,7 @@ export default function HouseDetailsForm({
   }
 
   async function confirmPdfUpload() {
+    // Ask the backend to map PDF labels into the exact fields used by page one.
     if (!selectedPdfFile) {
       setPdfError("Choose a PDF file first.");
       return;

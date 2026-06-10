@@ -10,12 +10,15 @@ from api.pdf_form_parser import parse_house_details_pdf
 from api.schemas import (
     ChatHistoryMessage,
     ChatRequest,
-    ChatResponse,
     PdfHouseDetailsRequest,
     PdfHouseDetailsResponse,
 )
 
-app = FastAPI()
+app = FastAPI(
+    title="KV-Capital Comps Agent API",
+    description="Tool-driven property valuation, comparable sale ranking, PDF parsing, and CSV export API.",
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,22 +30,13 @@ app.add_middleware(
 
 
 def serialize_history(messages: list[ChatHistoryMessage]) -> list[dict[str, str]]:
+    """Trim Pydantic history objects to the role/content shape Gemini expects."""
     return [{"role": message.role, "content": message.content} for message in messages]
-
-
-@app.post("/chat")
-def chat(req: ChatRequest) -> ChatResponse:
-    result = build_response(
-        req.message,
-        req.house_details,
-        req.conversation_id,
-        conversation_history=serialize_history(req.conversation_history),
-    )
-    return ChatResponse(**result)
 
 
 @app.post("/chat/stream")
 def chat_stream(req: ChatRequest) -> StreamingResponse:
+    """Stream trace events as NDJSON, then emit the final chat response."""
     def events():
         queue: Queue[dict[str, object] | None] = Queue()
 
@@ -77,6 +71,7 @@ def chat_stream(req: ChatRequest) -> StreamingResponse:
 
 @app.post("/parse-house-pdf")
 def parse_house_pdf(req: PdfHouseDetailsRequest) -> PdfHouseDetailsResponse:
+    """Extract supported house-detail form fields from an uploaded PDF."""
     result = parse_house_details_pdf(req.data_base64, req.mime_type)
     return PdfHouseDetailsResponse(**result)
 

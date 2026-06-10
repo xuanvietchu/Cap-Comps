@@ -33,6 +33,7 @@ ARRAY_FIELDS = {"exterior", "floor", "foundation", "heat", "roof", "extra"}
 
 
 def _clean_details(raw: dict[str, Any]) -> dict[str, Any]:
+    """Keep only frontend-supported fields and normalize array-like values."""
     details: dict[str, Any] = {}
     for key, value in raw.items():
         if key not in FORM_FIELDS or value in (None, ""):
@@ -51,6 +52,7 @@ def parse_house_details_pdf(
     data_base64: str,
     mime_type: str = "application/pdf",
 ) -> dict[str, Any]:
+    """Use Gemini to extract structured house details from a PDF payload."""
     field_list = ", ".join(sorted(FORM_FIELDS))
     contents = [
         {
