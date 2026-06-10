@@ -231,8 +231,16 @@ def explain_comp_similarity(subject: dict[str, Any], comp: dict[str, Any]) -> di
     }
 
 
-def explain_comps(subject: dict[str, Any], top_n: int = 5) -> dict[str, Any]:
-    comps_with_details = rank_comps_with_details(subject, top_n=top_n)
+def explain_comps(
+    subject: dict[str, Any],
+    top_n: int = 5,
+    comps_with_details: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    if comps_with_details is None:
+        comps_with_details = rank_comps_with_details(subject, top_n=top_n)
+    else:
+        comps_with_details = comps_with_details[:top_n]
+
     top_comps = [summarize_comp(comp) for comp in comps_with_details]
     explanations = [explain_comp_similarity(subject, comp) for comp in comps_with_details]
 

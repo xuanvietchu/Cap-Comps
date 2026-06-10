@@ -6,13 +6,20 @@ from queue import Queue
 from threading import Thread
 
 from api.comps_service import build_response
-from api.schemas import ChatHistoryMessage, ChatRequest, ChatResponse
+from api.pdf_form_parser import parse_house_details_pdf
+from api.schemas import (
+    ChatHistoryMessage,
+    ChatRequest,
+    ChatResponse,
+    PdfHouseDetailsRequest,
+    PdfHouseDetailsResponse,
+)
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,6 +73,12 @@ def chat_stream(req: ChatRequest) -> StreamingResponse:
             yield json.dumps(event, default=str) + "\n"
 
     return StreamingResponse(events(), media_type="application/x-ndjson")
+
+
+@app.post("/parse-house-pdf")
+def parse_house_pdf(req: PdfHouseDetailsRequest) -> PdfHouseDetailsResponse:
+    result = parse_house_details_pdf(req.data_base64, req.mime_type)
+    return PdfHouseDetailsResponse(**result)
 
 
 @app.get("/health")

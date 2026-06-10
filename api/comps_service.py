@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -22,6 +23,7 @@ from api.gemini_client import (
     text_from_parts,
     tool_calls_from_parts,
 )
+from api.tools.comps_export import is_export_request
 from api.tool_orchestration import (
     build_display_options,
     build_explanation_payload,
@@ -40,6 +42,19 @@ class AgentRunResult:
     intent_analysis: dict[str, Any]
 
 
+def _extract_requested_comp_count(message: str) -> int | None:
+    patterns = [
+        r"\b(?:top|best|first|nearest|closest)\s+(\d{1,4})\s+(?:comps?|comparables?|properties|homes)\b",
+        r"\b(?:show|find|get|return|give|list)\s+(?:me\s+)?(\d{1,4})\s+(?:comps?|comparables?|properties|homes)\b",
+        r"\b(\d{1,4})\s+(?:comps?|comparables?)\b",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, message, flags=re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+    return None
+
+
 def _analyze_intent(
     message: str,
     house_details: dict[str, Any] | None,
@@ -51,7 +66,7 @@ def _analyze_intent(
         "subject_property_summary": format_house_summary(house_details),
         "previous_analysis_available": bool(state.last_analysis),
         "recent_conversation": recent_conversation(state),
-        "available_actions": ["PREDICT_PRICE", "GET_COMPS", "EXPLAIN_PRICE", "EXPLAIN_COMPS"],
+        "available_actions": ["PREDICT_PRICE", "GET_COMPS", "EXPLAIN_PRICE", "EXPLAIN_COMPS", "EXPORT_COMPS_CSV"],
     }
     contents = [
         {
@@ -60,12 +75,13 @@ def _analyze_intent(
                 {
                     "text": (
                         "Return only JSON with keys intent, confidence, summary, planned_tools. "
-                        "intent must be one of price, comps, explain, general. "
-                        "planned_tools must use only PREDICT_PRICE, GET_COMPS, EXPLAIN_PRICE, EXPLAIN_COMPS. "
+                        "intent must be one of price, comps, explain, export, general. "
+                        "planned_tools must use only PREDICT_PRICE, GET_COMPS, EXPLAIN_PRICE, EXPLAIN_COMPS, EXPORT_COMPS_CSV. "
                         "For a price-only request, planned_tools must be exactly [\"PREDICT_PRICE\"]. "
                         "For a comps request, planned_tools must be exactly [\"GET_COMPS\"]. GET_COMPS includes price estimation internally. "
                         "For a price explanation request, include PREDICT_PRICE before EXPLAIN_PRICE. "
                         "For a comps explanation request, planned_tools must be exactly [\"GET_COMPS\", \"EXPLAIN_COMPS\"]. "
+                        "For a CSV export request, planned_tools must be exactly [\"EXPORT_COMPS_CSV\"]. "
                         "Use recent_conversation to resolve follow-up questions and pronouns. "
                         f"Context JSON: {json.dumps(json_safe(context), default=str)}"
                     )
@@ -85,7 +101,7 @@ def _analyze_intent(
     planned_tools = intent_analysis.get("planned_tools")
     if not isinstance(planned_tools, list):
         planned_tools = []
-    allowed_tools = {"PREDICT_PRICE", "GET_COMPS", "EXPLAIN_PRICE", "EXPLAIN_COMPS"}
+    allowed_tools = {"PREDICT_PRICE", "GET_COMPS", "EXPLAIN_PRICE", "EXPLAIN_COMPS", "EXPORT_COMPS_CSV"}
     intent_analysis = {
         "intent": intent_analysis.get("intent", "general"),
         "confidence": intent_analysis.get("confidence", "low"),
@@ -110,6 +126,7 @@ def _build_agent_prompt_context(
         "user_message": message,
         "subject_property_summary": format_house_summary(house_details),
         "subject_property": house_details,
+        "requested_comp_count": _extract_requested_comp_count(message),
         "previous_analysis_available": bool(state.last_analysis),
         "previous_analysis": preview(state.last_analysis, limit=3000) if state.last_analysis else None,
         "recent_conversation": recent_conversation(state),
@@ -124,14 +141,17 @@ def _initial_agent_contents(context: dict[str, Any], intent_analysis: dict[str, 
                 {
                     "text": (
                         "Handle this request by choosing from exactly these actions only: "
-                        "PREDICT_PRICE, GET_COMPS, EXPLAIN_PRICE, EXPLAIN_COMPS. "
+                        "PREDICT_PRICE, GET_COMPS, EXPLAIN_PRICE, EXPLAIN_COMPS, EXPORT_COMPS_CSV. "
                         "If the user only asks for the price, call only PREDICT_PRICE. "
                         "If the user asks for comps, call only GET_COMPS. GET_COMPS includes price estimation internally. "
                         "If the user asks to explain price, call PREDICT_PRICE before EXPLAIN_PRICE. "
                         "Use EXPLAIN_COMPS only when the user explicitly asks why comps match or asks to explain comps. "
+                        "If the user asks to export, download, save, or create a CSV for comps, call only EXPORT_COMPS_CSV. "
+                        "EXPORT_COMPS_CSV uses the latest comps table in this conversation. "
                         "When EXPLAIN_COMPS is used, read path_comparison_output and synthesize a comp analysis under 200 words; do not paste raw tree paths. "
                         "Use recent_conversation and previous_analysis to answer follow-up questions in context. "
-                        "GET_COMPS should usually request 10 to 15 comps, defaulting to 12. "
+                        "When the user asks for a specific number of comps, call GET_COMPS with that number as top_n. "
+                        "When no count is requested, GET_COMPS should default to 15 comps. "
                         "After tool results are available, write the final answer in markdown. "
                         "Do not invent valuation numbers. Context JSON: "
                         f"{json.dumps(json_safe(context), default=str)} "
@@ -150,9 +170,11 @@ def _run_tool_call(
     executed_tools: set[str],
     tool_results: dict[str, Any],
     trace_events: list[dict[str, Any]],
+    internal_cache: dict[str, Any],
 ) -> list[dict[str, Any]]:
     name = call.get("name", "")
     args = call.get("args") or {}
+    requested_comp_count = intent_analysis.get("requested_comp_count")
 
     if intent_analysis.get("intent") == "price" and name != "PREDICT_PRICE":
         result = {
@@ -166,12 +188,26 @@ def _run_tool_call(
     for dependency_name in tool_dependencies(name):
         if dependency_name in executed_tools:
             continue
-        dependency_result = invoke_agent_tool(dependency_name, {}, house_details, trace_events)
+        dependency_args = (
+            {"top_n": requested_comp_count if requested_comp_count is not None else args.get("top_n")}
+            if dependency_name == "GET_COMPS"
+            else {}
+        )
+        dependency_result = invoke_agent_tool(
+            dependency_name,
+            dependency_args,
+            house_details,
+            trace_events,
+            internal_cache,
+        )
         tool_results[dependency_name] = dependency_result
         executed_tools.add(dependency_name)
         response_parts.append(tool_response_part(dependency_name, dependency_result))
 
-    result = invoke_agent_tool(name, args, house_details, trace_events)
+    if name == "GET_COMPS" and requested_comp_count is not None:
+        args = {**args, "top_n": requested_comp_count}
+
+    result = invoke_agent_tool(name, args, house_details, trace_events, internal_cache)
     tool_results[name] = result
     executed_tools.add(name)
     response_parts.append(tool_response_part(name, result))
@@ -185,10 +221,52 @@ def _gemini_agent_response(
     trace_events: list[dict[str, Any]],
 ) -> AgentRunResult:
     intent_analysis = _analyze_intent(message, house_details, state, trace_events)
+    if is_export_request(message):
+        intent_analysis = {
+            **intent_analysis,
+            "intent": "export",
+            "confidence": "high",
+            "summary": "The user asked to export comps as a CSV from the latest comps table.",
+            "planned_tools": ["EXPORT_COMPS_CSV"],
+        }
+        trace(trace_events, "intent", f"export intent: {intent_analysis['summary']}", intent_analysis)
+    requested_comp_count = _extract_requested_comp_count(message)
+    if requested_comp_count is not None:
+        intent_analysis["requested_comp_count"] = requested_comp_count
     context = _build_agent_prompt_context(message, house_details, state)
     contents = _initial_agent_contents(context, intent_analysis)
     tool_results: dict[str, Any] = {}
     executed_tools: set[str] = set()
+    internal_cache: dict[str, Any] = {
+        "LAST_ANALYSIS": state.last_analysis,
+        "USER_MESSAGE": message,
+    }
+
+    if intent_analysis.get("intent") == "export":
+        result = invoke_agent_tool(
+            "EXPORT_COMPS_CSV",
+            {"top_n": requested_comp_count} if requested_comp_count is not None else {},
+            house_details,
+            trace_events,
+            internal_cache,
+        )
+        row_count = result.get("row_count", 0) if isinstance(result, dict) else 0
+        missing = result.get("missing_addresses", []) if isinstance(result, dict) else []
+        if isinstance(result, dict) and result.get("status") == "ready":
+            answer = f"Exported {row_count} comp row{'s' if row_count != 1 else ''} to CSV."
+            if missing:
+                answer += f" I could not find {len(missing)} requested address{'es' if len(missing) != 1 else ''} in the training data."
+        else:
+            answer = (
+                "I could not export comps yet because this conversation does not have a recent comps table. "
+                "Ask me for comps first, then ask me to export them as CSV."
+            )
+        trace(trace_events, "final", "Export tool produced the final answer", {"answer": answer})
+        return AgentRunResult(
+            answer=answer,
+            tool_results={"EXPORT_COMPS_CSV": result},
+            intent_analysis=intent_analysis,
+        )
 
     for _ in range(5):
         response = call_gemini(contents, system_text=SYSTEM_PROMPT, use_tools=True)
@@ -210,6 +288,7 @@ def _gemini_agent_response(
                     executed_tools,
                     tool_results,
                     trace_events,
+                    internal_cache,
                 )
             )
         contents.append({"role": "user", "parts": response_parts})
@@ -258,6 +337,7 @@ def build_response(
     analysis = collect_analysis(tool_results, state.last_analysis)
     explanation = build_explanation_payload(tool_results)
     display = build_display_options(intent_analysis, tool_results)
+    export_csv = tool_results.get("EXPORT_COMPS_CSV") if isinstance(tool_results.get("EXPORT_COMPS_CSV"), dict) else None
     if not answer:
         answer = fallback_answer(effective_house)
 
@@ -273,6 +353,7 @@ def build_response(
         "display": display,
         "intent_analysis": intent_analysis,
         "agent_trace": trace_events,
+        "export_csv": export_csv,
     }
 
     if result["prediction"] or result["comps"] or result["explanation"]:

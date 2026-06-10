@@ -166,7 +166,7 @@ def score_candidate(
     }
 
 
-def rank_comps_with_details(subject: dict[str, Any], top_n: int = 20) -> list[dict[str, Any]]:
+def rank_comps_with_details(subject: dict[str, Any], top_n: int = 15) -> list[dict[str, Any]]:
     pool = candidate_pool(subject)
     if pool.empty:
         return []
@@ -190,7 +190,7 @@ def rank_comps_with_details(subject: dict[str, Any], top_n: int = 20) -> list[di
     return results[:top_n]
 
 
-def rank_comps(subject: dict[str, Any], top_n: int = 20) -> list[dict[str, Any]]:
+def rank_comps(subject: dict[str, Any], top_n: int = 15) -> list[dict[str, Any]]:
     return [summarize_comp(comp) for comp in rank_comps_with_details(subject, top_n=top_n)]
 
 

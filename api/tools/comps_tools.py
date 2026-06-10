@@ -19,6 +19,8 @@ from api.tools.comp_ranking import (
     price_per_sqft_similarity,
     price_per_sqft_value,
     rank_comps,
+    rank_comps_with_details,
+    summarize_comp,
 )
 from api.tools.model_store import (
     build_model_frame,
@@ -51,5 +53,7 @@ __all__ = [
     "price_per_sqft_similarity",
     "price_per_sqft_value",
     "rank_comps",
+    "rank_comps_with_details",
+    "summarize_comp",
     "transform_for_model",
 ]

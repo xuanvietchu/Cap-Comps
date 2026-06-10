@@ -12,6 +12,7 @@ from api.tools import (
     predict_house_price,
     rank_comps,
 )
+from api.tools.comps_export import build_csv_export_payload
 
 
 @dataclass
@@ -27,6 +28,7 @@ class CompsAgent:
         "GET_COMPS": rank_comps,
         "EXPLAIN_PRICE": explain_house_price,
         "EXPLAIN_COMPS": explain_comps,
+        "EXPORT_COMPS_CSV": build_csv_export_payload,
     }
 
     def invoke(self, payload: dict[str, Any]) -> dict[str, Any]:

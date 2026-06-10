@@ -4,16 +4,18 @@ from typing import Any
 
 from api.agent_debug import compact_tool_result, trace
 from api.tools.comps_tools import (
-    confidence_from_comps,
     explain_comps,
     explain_house_price,
     predict_house_price,
     rank_comps,
+    rank_comps_with_details,
+    summarize_comp,
 )
+from api.tools.comps_export import build_csv_export_payload
 
 
-CONFIDENCE_LEVELS = ("high", "medium", "low")
 PROPERTY_TOOLS = {"PREDICT_PRICE", "GET_COMPS", "EXPLAIN_PRICE", "EXPLAIN_COMPS"}
+CONVERSATION_TOOLS = {"EXPORT_COMPS_CSV"}
 DEPENDENCY_TOOLS: dict[str, list[str]] = {
     "EXPLAIN_PRICE": ["PREDICT_PRICE"],
     "EXPLAIN_COMPS": ["GET_COMPS"],
@@ -28,7 +30,7 @@ def safe_int(value: Any, default: int) -> int:
 
 
 def normalize_comp_count(value: Any) -> int:
-    return max(10, min(15, safe_int(value, 12)))
+    return max(1, safe_int(value, 15))
 
 
 def invoke_agent_tool(
@@ -36,6 +38,7 @@ def invoke_agent_tool(
     args: dict[str, Any],
     house_details: dict[str, Any] | None,
     trace_events: list[dict[str, Any]],
+    internal_cache: dict[str, Any],
 ) -> Any:
     if name in PROPERTY_TOOLS and house_details is None:
         result = {"error": "house_details_missing"}
@@ -46,11 +49,28 @@ def invoke_agent_tool(
     if name == "PREDICT_PRICE":
         result = predict_house_price(house_details or {})
     elif name == "GET_COMPS":
-        result = rank_comps(house_details or {}, top_n=normalize_comp_count(args.get("top_n")))
+        comps_with_details = rank_comps_with_details(
+            house_details or {},
+            top_n=normalize_comp_count(args.get("top_n")),
+        )
+        internal_cache["GET_COMPS_DETAILS"] = comps_with_details
+        result = [summarize_comp(comp) for comp in comps_with_details]
     elif name == "EXPLAIN_PRICE":
         result = explain_house_price(house_details or {}, top_n=safe_int(args.get("top_n"), 5))
     elif name == "EXPLAIN_COMPS":
-        result = explain_comps(house_details or {}, top_n=safe_int(args.get("top_n"), 5))
+        result = explain_comps(
+            house_details or {},
+            top_n=safe_int(args.get("top_n"), 5),
+            comps_with_details=internal_cache.get("GET_COMPS_DETAILS"),
+        )
+    elif name == "EXPORT_COMPS_CSV":
+        addresses = args.get("addresses")
+        result = build_csv_export_payload(
+            internal_cache.get("USER_MESSAGE", ""),
+            internal_cache.get("LAST_ANALYSIS"),
+            top_n=safe_int(args.get("top_n"), 0) or None,
+            addresses=addresses if isinstance(addresses, list) else None,
+        )
     else:
         result = {"error": f"Unknown tool: {name}"}
 
@@ -73,16 +93,8 @@ def collect_analysis(tool_results: dict[str, Any], fallback_analysis: dict[str, 
     if isinstance(comps_explanation, dict) and isinstance(comps_explanation.get("top_comps"), list):
         analysis["comps"] = comps_explanation["top_comps"]
 
-    if analysis.get("prediction") and "confidence_level" not in analysis:
+    if analysis.get("prediction"):
         analysis["confidence_level"] = analysis["prediction"].get("confidence_level", "low")
-
-    if analysis.get("prediction") and analysis.get("comps"):
-        comp_confidence = confidence_from_comps(analysis["comps"])
-        confidence_order = {name: index for index, name in enumerate(CONFIDENCE_LEVELS)}
-        analysis["confidence_level"] = max(
-            [analysis.get("confidence_level", "low"), comp_confidence],
-            key=lambda level: confidence_order.get(level, len(CONFIDENCE_LEVELS)),
-        )
 
     return analysis or None
 
@@ -105,6 +117,7 @@ def build_display_options(intent_analysis: dict[str, Any], tool_results: dict[st
     return {
         "show_prediction": intent == "price" and "PREDICT_PRICE" in tool_results,
         "show_comps": intent == "comps" and "GET_COMPS" in tool_results and "EXPLAIN_COMPS" not in planned_tools,
+        "show_csv_export": intent == "export" and tool_results.get("EXPORT_COMPS_CSV", {}).get("status") == "ready",
     }
 
 

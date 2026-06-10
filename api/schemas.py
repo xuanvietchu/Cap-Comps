@@ -16,6 +16,17 @@ class ChatRequest(BaseModel):
     conversation_history: list[ChatHistoryMessage] = Field(default_factory=list)
 
 
+class PdfHouseDetailsRequest(BaseModel):
+    filename: str
+    mime_type: str = "application/pdf"
+    data_base64: str
+
+
+class PdfHouseDetailsResponse(BaseModel):
+    details: dict[str, Any] = Field(default_factory=dict)
+    summary: str = ""
+
+
 class PredictionBand(BaseModel):
     predicted_price: float
     predicted_price_low: float
@@ -44,6 +55,7 @@ class CompResult(BaseModel):
 class DisplayOptions(BaseModel):
     show_prediction: bool = False
     show_comps: bool = False
+    show_csv_export: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -58,3 +70,4 @@ class ChatResponse(BaseModel):
     display: DisplayOptions = Field(default_factory=DisplayOptions)
     intent_analysis: Optional[dict[str, Any]] = None
     agent_trace: list[dict[str, Any]] = Field(default_factory=list)
+    export_csv: Optional[dict[str, Any]] = None
