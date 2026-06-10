@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 
 import {
   HouseDetails,
@@ -34,6 +34,11 @@ import {
   MultiSelectField,
   SearchableInput,
 } from "./houseFormFields";
+
+type ParsedHouseDetailsResponse = {
+  details?: Partial<UiHouseDetails>;
+  summary?: string;
+};
 
 async function geocodeEdmontonAddress(address: string) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(
@@ -78,6 +83,31 @@ async function geocodeEdmontonAddress(address: string) {
   };
 }
 
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read the PDF file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function backendUrl(path: string) {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (configuredUrl) {
+    return `${configuredUrl.replace(/\/$/, "")}${path}`;
+  }
+
+  const host =
+    typeof window === "undefined" || !window.location.hostname
+      ? "localhost"
+      : window.location.hostname;
+  return `http://${host}:8000${path}`;
+}
+
 export default function HouseDetailsForm({
   initialDetails,
   onSubmit,
@@ -92,7 +122,13 @@ export default function HouseDetailsForm({
     initialDetails ? toUiDetails(initialDetails) : initialUiDetails,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isParsingPdf, setIsParsingPdf] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [pdfError, setPdfError] = useState("");
+  const [pdfMessage, setPdfMessage] = useState("");
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   function updateField<K extends keyof UiHouseDetails>(
     field: K,
@@ -102,6 +138,86 @@ export default function HouseDetailsForm({
       ...prev,
       [field]: value,
     }));
+  }
+
+  function handlePdfFileSelection(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setSubmitError("");
+    setPdfMessage("");
+    setPdfError("");
+
+    if (
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setPdfError("Upload a PDF file.");
+      return;
+    }
+
+    setSelectedPdfFile(file);
+  }
+
+  async function confirmPdfUpload() {
+    if (!selectedPdfFile) {
+      setPdfError("Choose a PDF file first.");
+      return;
+    }
+
+    setSubmitError("");
+    setPdfMessage("");
+    setPdfError("");
+
+    try {
+      setIsParsingPdf(true);
+      const dataBase64 = await fileToBase64(selectedPdfFile);
+      const response = await fetch(backendUrl("/parse-house-pdf"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: selectedPdfFile.name,
+          mime_type: selectedPdfFile.type || "application/pdf",
+          data_base64: dataBase64,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}`);
+      }
+
+      const parsed = (await response.json()) as ParsedHouseDetailsResponse;
+      const parsedDetails = parsed.details ?? {};
+      const foundFields = Object.keys(parsedDetails).filter(
+        (key) => parsedDetails[key as keyof UiHouseDetails] !== undefined,
+      );
+
+      if (foundFields.length === 0) {
+        setPdfMessage("No house detail fields were found in the PDF.");
+        return;
+      }
+
+      setDetails((prev) => ({
+        ...prev,
+        ...parsedDetails,
+      }));
+      setPdfMessage(
+        `Filled ${foundFields.length} fields on the first page of the form.`,
+      );
+      setSelectedPdfFile(null);
+      setIsPdfModalOpen(false);
+    } catch (error) {
+      setPdfError(
+        error instanceof TypeError
+          ? "Could not reach the backend at port 8000. Make sure FastAPI is running, then try again."
+          : error instanceof Error
+            ? error.message
+            : "Could not parse the PDF.",
+      );
+    } finally {
+      setIsParsingPdf(false);
+    }
   }
 
   async function submitForm(e: FormEvent) {
@@ -153,14 +269,148 @@ export default function HouseDetailsForm({
           <p className="text-slate-400">Page {page} of 2</p>
         </div>
 
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
-        >
-          Cancel
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handlePdfFileSelection}
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            title="Upload PDF"
+            aria-label="Upload PDF"
+            disabled={isParsingPdf}
+            onClick={() => {
+              setPdfError("");
+              setPdfMessage("");
+              setSelectedPdfFile(null);
+              setIsPdfModalOpen(true);
+            }}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isParsingPdf ? (
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-300" />
+            ) : (
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8 12 3 7 8" />
+                <path d="M12 3v12" />
+              </svg>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
+
+      {isPdfModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  Upload property PDF
+                </h3>
+                <p className="mt-1 text-sm text-slate-400">
+                  The whole PDF will be used to fill the first page of the form.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Close PDF upload"
+                disabled={isParsingPdf}
+                onClick={() => {
+                  setIsPdfModalOpen(false);
+                  setPdfError("");
+                  setSelectedPdfFile(null);
+                }}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                X
+              </button>
+            </div>
+
+            <button
+              type="button"
+              disabled={isParsingPdf}
+              onClick={() => pdfInputRef.current?.click()}
+              className="mt-5 flex min-h-32 w-full flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 px-4 py-6 text-center transition hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-7 w-7 text-amber-200"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8 12 3 7 8" />
+                <path d="M12 3v12" />
+              </svg>
+              <span className="mt-3 text-sm font-medium text-slate-100">
+                {selectedPdfFile ? selectedPdfFile.name : "Choose a PDF file"}
+              </span>
+              {selectedPdfFile && (
+                <span className="mt-1 text-xs text-slate-500">
+                  {(selectedPdfFile.size / 1024 / 1024).toFixed(2)} MB
+                </span>
+              )}
+            </button>
+
+            {pdfError && (
+              <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+                {pdfError}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={isParsingPdf}
+                onClick={() => {
+                  setIsPdfModalOpen(false);
+                  setPdfError("");
+                  setSelectedPdfFile(null);
+                }}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isParsingPdf || !selectedPdfFile}
+                onClick={confirmPdfUpload}
+                className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isParsingPdf ? "Parsing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {page === 1 ? (
         <div className="space-y-6">
@@ -226,10 +476,14 @@ export default function HouseDetailsForm({
               <select
                 value={details.garage}
                 onChange={(e) => updateField("garage", e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 outline-none text-sm"
+                className="w-full rounded-xl border border-gray-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
               >
                 {garageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    className="bg-slate-800 text-white"
+                  >
                     {option.label}
                   </option>
                 ))}
@@ -366,6 +620,11 @@ export default function HouseDetailsForm({
       {submitError && (
         <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-200">
           {submitError}
+        </div>
+      )}
+      {pdfMessage && (
+        <div className="mt-6 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-emerald-100">
+          {pdfMessage}
         </div>
       )}
 
