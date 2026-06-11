@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import os
 from typing import Any
@@ -34,41 +33,6 @@ def call_gemini(
         method="POST",
     )
     with urlopen(request, timeout=float(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
-def call_gemini_with_pdf(
-    prompt: str,
-    pdf_bytes: bytes,
-    system_text: str,
-) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "systemInstruction": {"parts": [{"text": system_text}]},
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    {"text": prompt},
-                    {
-                        "inlineData": {
-                            "mimeType": "application/pdf",
-                            "data": base64.b64encode(pdf_bytes).decode("ascii"),
-                        }
-                    },
-                ],
-            }
-        ],
-        "generationConfig": {"temperature": 0.0},
-    }
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={GOOGLE_API_KEY}"
-    request = Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with urlopen(request, timeout=float(os.getenv("GEMINI_TIMEOUT_SECONDS", "45"))) as response:
         return json.loads(response.read().decode("utf-8"))
 
 

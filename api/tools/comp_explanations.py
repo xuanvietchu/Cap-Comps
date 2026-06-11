@@ -194,12 +194,6 @@ def explain_comp_similarity(subject: dict[str, Any], comp: dict[str, Any]) -> di
     candidate_model_price = predict_house_price(candidate_details)["predicted_price"]
     shared_drivers = common_shap_drivers(subject_frame, candidate_frame, top_n=3)
     path_comparison = decision_path_comparison(subject_frame, candidate_frame, max_trees=5)
-    # print(
-    #     f"\n[EXPLAIN_COMPS] Decision path comparison for comp: {comp['address']}\n"
-    #     f"{path_comparison['path_comparison_output']}\n",
-    #     flush=True,
-    # )
-
     leaf_matches = comp["leaf_matches"]
     leaf_count = comp["leaf_count"]
     leaf_match_pct = float(leaf_matches / leaf_count) if leaf_count else 0.0

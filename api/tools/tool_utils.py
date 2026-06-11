@@ -13,9 +13,6 @@ METRICS_PATH = MODEL_PATH.with_suffix(".metrics.json")
 TRAIN_DATASET_PATH = ROOT / "data" / "train" / "train.csv"
 DATE_ORIGIN = date(2000, 1, 1)
 NON_MODEL_COLUMNS = {"price", "address", "maxDistanceKm", "sqftTolerancePct", "yearTolerance"}
-CONFIDENCE_LEVELS = ("high", "medium", "low")
-
-
 def parse_float(value: Any, default: float | None = None) -> float | None:
     if value is None or value == "":
         return default
