@@ -56,7 +56,10 @@ def _normalize_address(address: Any) -> str:
 
 
 def _comp_addresses(last_analysis: dict[str, Any] | None) -> list[str]:
-    comps = (last_analysis or {}).get("comps")
+    analysis = last_analysis or {}
+    comps = analysis.get("comps_table")
+    if not isinstance(comps, list):
+        comps = analysis.get("comps")
     if not isinstance(comps, list):
         return []
     addresses = []

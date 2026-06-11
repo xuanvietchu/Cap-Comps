@@ -7,9 +7,9 @@ export default function PredictionCard({
   prediction: PredictionBand;
 }) {
   const confidenceLabel =
-    prediction.interval_width_ratio <= 0.1
+    prediction.interval_width_ratio < 0.1
       ? "High"
-      : prediction.interval_width_ratio <= 0.2
+      : prediction.interval_width_ratio < 0.3
         ? "Medium"
         : "Low";
 

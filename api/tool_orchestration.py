@@ -83,6 +83,10 @@ def invoke_agent_tool(
 def collect_analysis(tool_results: dict[str, Any], fallback_analysis: dict[str, Any] | None) -> dict[str, Any] | None:
     """Merge fresh tool outputs with the previous analysis for follow-up turns."""
     analysis = dict(fallback_analysis or {})
+    previous_comps_table = analysis.get("comps_table")
+    if not isinstance(previous_comps_table, list):
+        previous_comps_table = analysis.get("comps")
+    has_comps_explanation = "EXPLAIN_COMPS" in tool_results
 
     prediction = tool_results.get("PREDICT_PRICE")
     if isinstance(prediction, dict) and "error" not in prediction:
@@ -90,11 +94,20 @@ def collect_analysis(tool_results: dict[str, Any], fallback_analysis: dict[str, 
 
     comps = tool_results.get("GET_COMPS")
     if isinstance(comps, list):
-        analysis["comps"] = comps
+        if has_comps_explanation and isinstance(previous_comps_table, list) and previous_comps_table:
+            analysis["comps_table"] = previous_comps_table
+        else:
+            analysis["comps"] = comps
+            analysis["comps_table"] = comps
 
     comps_explanation = tool_results.get("EXPLAIN_COMPS")
     if isinstance(comps_explanation, dict) and isinstance(comps_explanation.get("top_comps"), list):
-        analysis["comps"] = comps_explanation["top_comps"]
+        analysis["explained_comps"] = comps_explanation["top_comps"]
+        if isinstance(previous_comps_table, list) and previous_comps_table:
+            analysis["comps"] = previous_comps_table
+            analysis["comps_table"] = previous_comps_table
+        elif "comps_table" not in analysis:
+            analysis["comps_table"] = comps_explanation["top_comps"]
 
     if analysis.get("prediction"):
         analysis["confidence_level"] = analysis["prediction"].get("confidence_level", "low")

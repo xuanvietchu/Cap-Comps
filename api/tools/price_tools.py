@@ -43,9 +43,9 @@ def predict_house_price(details: dict[str, Any]) -> dict[str, Any]:
     width = max(interval["high"] - interval["low"], 0.0)
     width_ratio = width / midpoint
 
-    if width_ratio <= 0.10:
+    if width_ratio < 0.10:
         confidence = "high"
-    elif width_ratio <= 0.20:
+    elif width_ratio < 0.30:
         confidence = "medium"
     else:
         confidence = "low"

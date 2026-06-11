@@ -65,7 +65,7 @@ export type HouseDetails = {
 
 export type UiHouseDetails = {
   address: string;
-  assessmentClass: "residential" | "condo";
+  assessmentClass: "" | "residential" | "condo";
   zoning: string;
   bathroomsCount: string;
   bedroomsCount: string;
@@ -76,6 +76,8 @@ export type UiHouseDetails = {
   houseStyle: string;
   basement: string;
   neighbourhoodName: string;
+  lat: string;
+  lon: string;
   L_basement2_status: string;
   L_basement1_size: string;
   L_basement1_status: string;
@@ -86,6 +88,10 @@ export type UiHouseDetails = {
   heat: string[];
   roof: string[];
   extra: string[];
+
+  walkscore: string;
+  transitscore: string;
+  bikescore: string;
 
   maxDistanceKm: string;
   sqftTolerancePct: string;
@@ -105,9 +111,15 @@ export const initialUiDetails: UiHouseDetails = {
   houseStyle: "bungalow",
   basement: "",
   neighbourhoodName: "Newton",
+  lat: "",
+  lon: "",
   L_basement2_status: "Fully Finished",
   L_basement1_size: "Full",
   L_basement1_status: "Finished",
+
+  walkscore: "",
+  transitscore: "",
+  bikescore: "",
 
   exterior: ["Stucco", "Concrete"],
   floor: ["Linoleum", "Carpet"],
@@ -128,6 +140,41 @@ export const initialUiDetails: UiHouseDetails = {
   yearTolerance: "10",
 };
 
+export const blankUiDetails: UiHouseDetails = {
+  address: "",
+  assessmentClass: "",
+  zoning: "",
+  bathroomsCount: "",
+  bedroomsCount: "",
+  livingArea: "",
+  lotSizeArea: "",
+  yearBuilt: "",
+  garage: "",
+  houseStyle: "",
+  basement: "",
+  neighbourhoodName: "",
+  lat: "",
+  lon: "",
+  L_basement2_status: "",
+  L_basement1_size: "",
+  L_basement1_status: "",
+
+  walkscore: "",
+  transitscore: "",
+  bikescore: "",
+
+  exterior: [],
+  floor: [],
+  foundation: [],
+  heat: [],
+  roof: [],
+  extra: [],
+
+  maxDistanceKm: initialUiDetails.maxDistanceKm,
+  sqftTolerancePct: initialUiDetails.sqftTolerancePct,
+  yearTolerance: initialUiDetails.yearTolerance,
+};
+
 export function toBackendDetails(ui: UiHouseDetails): HouseDetails {
   return {
     address: ui.address,
@@ -143,11 +190,11 @@ export function toBackendDetails(ui: UiHouseDetails): HouseDetails {
     basement: ui.basement,
     neighbourhoodName: ui.neighbourhoodName,
 
-    lat: "",
-    lon: "",
-    walkscore: "",
-    transitscore: "",
-    bikescore: "",
+    lat: ui.lat,
+    lon: ui.lon,
+    walkscore: ui.walkscore,
+    transitscore: ui.transitscore,
+    bikescore: ui.bikescore,
 
     L_basement2_status: ui.L_basement2_status,
     L_basement1_size: ui.L_basement1_size,
@@ -211,7 +258,11 @@ export function toUiDetails(details: HouseDetails): UiHouseDetails {
   return {
     address: details.address ?? "",
     assessmentClass:
-      details.assessmentClass === "condo" ? "condo" : "residential",
+      details.assessmentClass === "condo"
+        ? "condo"
+        : details.assessmentClass === "residential"
+          ? "residential"
+          : "",
     zoning: details.zoning,
     bathroomsCount: details.bathroomsCount,
     bedroomsCount: details.bedroomsCount,
@@ -222,9 +273,15 @@ export function toUiDetails(details: HouseDetails): UiHouseDetails {
     houseStyle: details.houseStyle,
     basement: details.basement,
     neighbourhoodName: details.neighbourhoodName,
+    lat: details.lat,
+    lon: details.lon,
     L_basement2_status: details.L_basement2_status,
     L_basement1_size: details.L_basement1_size,
     L_basement1_status: details.L_basement1_status,
+
+    walkscore: details.walkscore,
+    transitscore: details.transitscore,
+    bikescore: details.bikescore,
 
     exterior: [
       details.exteriorWood === "1" && "Wood",

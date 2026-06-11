@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Housing Comps Agent",
-  description: "Predict house prices, rank comparable sales, and explain LightGBM results.",
+  description:
+    "Predict house prices, rank comparable sales, and explain LightGBM results.",
 };
 
 export default function RootLayout({

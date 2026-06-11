@@ -14,8 +14,9 @@ from api.schemas import (
     PdfHouseDetailsResponse,
 )
 
+
 app = FastAPI(
-    title="KV-Capital Comps Agent API",
+    title="HousingComps Agent API",
     description="Tool-driven property valuation, comparable sale ranking, PDF parsing, and CSV export API.",
     version="1.0.0",
 )

@@ -14,7 +14,7 @@ export default function AgentChatHeader({
       <div className="mx-auto flex w-full max-w-3xl items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Housing Comps Agent
+            Housing Comps Agent (Cap-comps)
           </p>
           <h2 className="mt-2 text-xl font-semibold text-white">
             {activeConversation.title}

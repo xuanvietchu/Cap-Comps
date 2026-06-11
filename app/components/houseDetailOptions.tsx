@@ -1,4 +1,4 @@
-export const assessmentClassOptions = ["residential", "condo"];
+export const assessmentClassOptions = ["", "residential", "condo"];
 
 export const houseStyleOptions = [
   "",

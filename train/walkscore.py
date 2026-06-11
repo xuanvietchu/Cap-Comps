@@ -86,7 +86,7 @@ def get_score_alts(address):
 
 
 def format_address(address):
-    postfix = " EDMONTON AB CANADA"
+    postfix = "" #"EDMONTON AB CANADA"
 
     return (
         (str(address).strip() + postfix)

@@ -1,6 +1,6 @@
-# KV-Capital Frontend
+# Frontend
 
-This is the Next.js chat interface for KV-Capital. It lets users create a subject-property conversation, stream backend agent events, inspect valuation/comps results, parse property PDFs, and export comps as CSV.
+This is the Next.js chat interface for Housing AI Agent. It lets users create a subject-property conversation, stream backend agent events, inspect valuation/comps results, parse property PDFs, and export comps as CSV.
 
 ## Setup
 
@@ -26,12 +26,6 @@ The backend must also be running at:
 
 ```text
 http://localhost:8000
-```
-
-To point the frontend at a deployed or non-local backend, create `app/.env.local`:
-
-```env
-NEXT_PUBLIC_API_BASE_URL=https://your-api-host.example
 ```
 
 ## Key Files

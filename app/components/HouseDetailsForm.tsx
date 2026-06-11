@@ -5,6 +5,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   HouseDetails,
   UiHouseDetails,
+  blankUiDetails,
   initialUiDetails,
   toUiDetails,
   toBackendDetails,
@@ -39,6 +40,11 @@ type ParsedHouseDetailsResponse = {
   details?: Partial<UiHouseDetails>;
   summary?: string;
 };
+
+type WalkScoreDetails = Pick<
+  UiHouseDetails,
+  "walkscore" | "transitscore" | "bikescore"
+>;
 
 async function geocodeEdmontonAddress(address: string) {
   // Coordinates anchor distance-based comp filtering, so keep geocoding Edmonton-scoped.
@@ -82,6 +88,29 @@ async function geocodeEdmontonAddress(address: string) {
     lat: String(match.lat),
     lon: String(match.lon),
   };
+}
+
+function formatWalkScoreAddress(address: string) {
+  return address
+    .trim()
+    .toLowerCase()
+    .replace(/\bstreet\b/g, "st")
+    .replace(/\bavenue\b/g, "ave")
+    .replace(/\broad\b/g, "rd")
+    .replace(/\s+/g, "-");
+}
+
+async function scrapeWalkScore(address: string): Promise<WalkScoreDetails> {
+  const response = await fetch("/api/walkscore", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address: formatWalkScoreAddress(address) }),
+  });
+  if (!response.ok) {
+    throw new Error(`Walk Score returned ${response.status}.`);
+  }
+
+  return response.json();
 }
 
 function fileToBase64(file: File) {
@@ -193,8 +222,11 @@ export default function HouseDetailsForm({
 
       const parsed = (await response.json()) as ParsedHouseDetailsResponse;
       const parsedDetails = parsed.details ?? {};
-      const foundFields = Object.keys(parsedDetails).filter(
-        (key) => parsedDetails[key as keyof UiHouseDetails] !== undefined,
+      const cleanParsedDetails = Object.fromEntries(
+        Object.entries(parsedDetails).filter(([, value]) => value !== undefined),
+      ) as Partial<UiHouseDetails>;
+      const foundFields = Object.keys(cleanParsedDetails).filter(
+        (key) => cleanParsedDetails[key as keyof UiHouseDetails] !== undefined,
       );
 
       if (foundFields.length === 0) {
@@ -203,8 +235,11 @@ export default function HouseDetailsForm({
       }
 
       setDetails((prev) => ({
-        ...prev,
-        ...parsedDetails,
+        ...blankUiDetails,
+        maxDistanceKm: prev.maxDistanceKm,
+        sqftTolerancePct: prev.sqftTolerancePct,
+        yearTolerance: prev.yearTolerance,
+        ...cleanParsedDetails,
       }));
       setPdfMessage(
         `Filled ${foundFields.length} fields on the first page of the form.`,
@@ -236,12 +271,40 @@ export default function HouseDetailsForm({
     try {
       setIsSubmitting(true);
 
-      const geo = await geocodeEdmontonAddress(details.address);
+      const hasCoordinates = details.lat.trim() !== "" && details.lon.trim() !== "";
+      const geo = hasCoordinates
+        ? {
+            formattedAddress: details.address,
+            lat: details.lat,
+            lon: details.lon,
+          }
+        : await geocodeEdmontonAddress(details.address);
+      let scoreDetails: WalkScoreDetails = {
+        walkscore: details.walkscore,
+        transitscore: details.transitscore,
+        bikescore: details.bikescore,
+      };
+
+      if (details.walkscore.trim() === "") {
+        try {
+          const scrapedScores = await scrapeWalkScore(details.address);
+          scoreDetails = {
+            walkscore: scrapedScores.walkscore || scoreDetails.walkscore,
+            transitscore: scrapedScores.transitscore || scoreDetails.transitscore,
+            bikescore: scrapedScores.bikescore || scoreDetails.bikescore,
+          };
+        } catch {
+          // Non-fatal: continue if Walk Score cannot be scraped.
+        }
+      }
 
       const backendDetails = {
         ...toBackendDetails({
           ...details,
+          lat: geo.lat,
+          lon: geo.lon,
           address: geo.formattedAddress,
+          ...scoreDetails,
         }),
         lat: geo.lat,
         lon: geo.lon,

@@ -355,6 +355,7 @@ def build_response(
         "confidence_level": (analysis or {}).get("confidence_level", "low"),
         "prediction": (analysis or {}).get("prediction"),
         "comps": (analysis or {}).get("comps", []),
+        "comps_table": (analysis or {}).get("comps_table", []),
         "intent": intent_analysis.get("intent", "general"),
         "prompt": f"{source}:{MODEL_NAME}:tool-driven",
         "explanation": explanation,

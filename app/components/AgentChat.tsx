@@ -120,7 +120,7 @@ export default function AgentChat() {
           {
             role: "agent",
             content:
-              "House details saved. Ask me for subject price evaluation, top 10 comps, or an explanation on price and evaluation.",
+              "Hello, my name is Cap-comps, your trusty housing comps AI Agent. Your House details are saved. Ask me for subject price evaluation, top 10 comps, or an explanation on price and evaluation.",
           },
           "agent",
         ),
