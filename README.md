@@ -2,7 +2,7 @@
 
 Capcom is a real estate valuation assistant, focusing only on recent Edmonton Residential Properties. It combines a Next.js chat interface, a FastAPI backend, Gemini-powered (3.1 flash) intent routing and PDF property-detail parser, a LightGBM quantile valuation and comparable sale ranking model.
 
-The [core demo video flow](https://www.loom.com/share/cf1f0c5306744f4cb76b0fb81306c374) is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
+The core demo flow is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
 
 ## What It Does
 
@@ -44,7 +44,7 @@ KV/
 - npm version >= 10.2.4
 - A Google Gemini API key
 - Local model artifact at `models/house_price_lgbm_pipeline.joblib` ([Download](https://drive.google.com/drive/folders/1Xmp_OEdOtyWBeikViou4VG41tqgTcoGf?usp=sharing))
-- Training data at `data/train/train.csv`(to download the data to run the app, please contact me directly at `vchu1@ualberta.ca`.)
+- Training data at `data/train/train.csv`(to download these datasets to run the app, please contact me directly at `vchu1@ualberta.ca`.)
 - Whole dataset at `data/train/data.csv`
 
 ## Environment Setup
