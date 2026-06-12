@@ -49,6 +49,11 @@ KV/
 
 ## Environment Setup
 
+```
+git clone https://github.com/xuanvietchu/Cap-Comps
+cd Cap-Comps
+```
+
 Create a [Gemini api key](https://ai.google.dev/gemini-api/docs/api-key)
 
 Create a root `.env` file:
@@ -60,11 +65,6 @@ GOOGLE_API_KEY=your_google_api_key_here
 The backend loads this file from the project root. Without the key, `api/config.py` raises an error at startup.
 
 ## Backend Setup
-
-```
-git clone https://github.com/xuanvietchu/Cap-Comps
-cd Cap-Comps
-```
 
 From the repository root:
 
