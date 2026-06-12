@@ -106,7 +106,7 @@ def format_decision_path(path: list[dict[str, Any]]) -> list[str]:
 def decision_path_comparison(
     subject_frame: pd.DataFrame,
     candidate_frame: pd.DataFrame,
-    max_trees: int = 5,
+    max_trees: int = 30,
 ) -> dict[str, Any]:
     model = quantile_model()
     subject_leaves = np.asarray(model.predict(subject_frame, pred_leaf=True)).reshape(-1)
@@ -193,7 +193,7 @@ def explain_comp_similarity(subject: dict[str, Any], comp: dict[str, Any]) -> di
     subject_model_price = predict_house_price(subject)["predicted_price"]
     candidate_model_price = predict_house_price(candidate_details)["predicted_price"]
     shared_drivers = common_shap_drivers(subject_frame, candidate_frame, top_n=3)
-    path_comparison = decision_path_comparison(subject_frame, candidate_frame, max_trees=5)
+    path_comparison = decision_path_comparison(subject_frame, candidate_frame, max_trees=30)
     leaf_matches = comp["leaf_matches"]
     leaf_count = comp["leaf_count"]
     leaf_match_pct = float(leaf_matches / leaf_count) if leaf_count else 0.0

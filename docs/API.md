@@ -1,4 +1,4 @@
-# KV-Capital API Reference
+# API Reference
 
 The backend is a FastAPI service for property valuation and comparable sale analysis. The chat API streams trace events and then returns the final agent response used by the Next.js UI.
 

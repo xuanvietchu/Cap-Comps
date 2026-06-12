@@ -2,7 +2,7 @@
 
 Capcom is a real estate valuation assistant, focusing only on recent Edmonton Residential Properties. It combines a Next.js chat interface, a FastAPI backend, Gemini-powered intent routing and PDF property-detail parser, a LightGBM quantile valuation and comparable sale ranking model.
 
-The [core demo video flow](https://www.loom.com/share/cbf89b3ac0b348f3b26fd1ae86d4137d) is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
+The [core demo video flow](https://www.loom.com/share/cf1f0c5306744f4cb76b0fb81306c374) is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
 
 ## What It Does
 
@@ -33,6 +33,10 @@ KV/
   scraper/             Data collection utilities
   docs/API.md          API reference
 ```
+
+## System Design
+
+![alt text](system.png)
 
 ## Requirements
 
@@ -124,9 +128,9 @@ npm run lint
 
 ## A few Notes
 
-The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model; and a next.js web app with Next.js and FastAPI (if you want to consider this a project too).
+The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model.
 
-The scope of this project blown way out of my imagination, partly because I was having a ton of fun and had applicable skills specific to the case, but mainly due to me synthesizing my own data. I cannot find a high quality free public dataset that present a realistic enough situation. The product can only be as good as the data itself, so I took the problems into my own hands. For a smaller coding challenge, I believe providing a curated dataset would dramatically reduce overhead, as data collection is often a minor cost for organizations that already possess the information but can become a major bottleneck for individuals.
+The scope of this project blown way out of my imagination, partly because I was having a ton of fun and had applicable skills to the case, but mainly due to me synthesizing my own data. I cannot find a high quality free public dataset that present a realistic enough situation. The product can only be as good as the data itself, so I took the problems into my own hands. For a shorter coding challenge, I believe providing a curated dataset would dramatically reduce overhead, as data collection is often a minor cost for organizations that already possess the information but can become a major bottleneck for individuals.
 
 Also, I decided to skip the Commercial Case, simply because the data was lacking in both size and richness of information (sparse, missing cols) for me to understand the case study.
 
@@ -257,6 +261,12 @@ the Agent can generate human-readable explanations that help analysts understand
 - What factors make a comparable property relevant
 
 These explanations are then summarized using Gemini.
+
+Tradeoffs:
+
+- The more trees being passed into Gemini, the better the explanation will be.
+- This come at the cost of response time from Gemini
+- For a 10 minutes demo, only the top 5 most similar trees out of 300 trees are passed into Gemini.
 
 ### Baseline for Future Work
 
