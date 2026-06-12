@@ -27,7 +27,6 @@ from api.tools.model_store import (
     current_close_date_days,
     load_metrics,
     model_columns,
-    model_overview_text,
     transform_for_model,
 )
 from api.tools.price_tools import explain_house_price, predict_house_price
@@ -48,7 +47,6 @@ __all__ = [
     "leaf_similarity_score",
     "load_metrics",
     "model_columns",
-    "model_overview_text",
     "predict_house_price",
     "price_per_sqft_similarity",
     "price_per_sqft_value",

@@ -72,7 +72,7 @@ From the repository root:
 python -m pip install --upgrade pip
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python -m uvicorn api.main:app --reload --port 8000
 ```
 
