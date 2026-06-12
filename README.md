@@ -123,7 +123,7 @@ See [docs/API.md](docs/API.md) for endpoint details, request and response exampl
 
 The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model.
 
-The scope of this project blown way out of my imagination, partly because I was having a ton of fun and had applicable skills to the case, but mainly due to me synthesizing my own data. I cannot find a high quality free public dataset that present a realistic enough situation. The product can only be as good as the data itself, so I took the problems into my own hands. For a shorter coding challenge, I believe providing a curated dataset would dramatically reduce overhead, as data collection is often a minor cost for organizations that already possess the information but can become a major bottleneck for individuals.
+The scope of this project blown way out of my imagination, mainly due to me synthesizing my own data. I cannot find a high quality free public dataset that present a realistic enough situation (for house pricing). The product can only be as good as the data itself, so I scraped my own data.
 
 Also, I decided to skip the Commercial Case, simply because the data was lacking in both size and richness of information (sparse, missing cols) for me to understand the case study.
 
@@ -143,7 +143,7 @@ The goal of this component is to build a machine learning model that predicts re
 
 ### Data Collection
 
-- Scraped, cleaned, and consolidated approximately **7,000 Edmonton residential property sales** from **December 2025 to May 2026**.
+- Scraped, cleaned, and consolidated approximately **7,000 Edmonton residential property sales** from **December 2025 to April 2026**.
 - Data collection and preparation accounted for roughly **40% of the total project effort**.
 
 ### Features
@@ -196,8 +196,8 @@ Together, the models produce a prediction interval that can be used to estimate 
 | Confidence Level | Prediction Interval Width  |
 | ---------------- | -------------------------- |
 | High             | < 10% of median prediction |
-| Medium           | 10% – 20%                  |
-| Low              | > 20%                      |
+| Medium           | 10% – 30%                  |
+| Low              | > 30%                      |
 
 ---
 
