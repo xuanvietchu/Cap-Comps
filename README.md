@@ -40,7 +40,7 @@ KV/
 
 ## Requirements
 
-- Python >= 3.12.13
+- Python >= 3.12
 - npm version >= 10.2.4
 - A Google Gemini API key
 - Local model artifact at `models/house_price_lgbm_pipeline.joblib` ([Download](https://drive.google.com/drive/folders/1Xmp_OEdOtyWBeikViou4VG41tqgTcoGf?usp=sharing))
@@ -69,7 +69,6 @@ cd Cap-Comps
 From the repository root:
 
 ```powershell
-python -m pip install --upgrade pip
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
