@@ -1,6 +1,6 @@
 # Cap-Comps
 
-Capcom is a real estate valuation assistant, focusing only on recent Edmonton Residential Properties. It combines a Next.js chat interface, a FastAPI backend, Gemini-powered intent routing and PDF property-detail parser, a LightGBM quantile valuation and comparable sale ranking model.
+Capcom is a real estate valuation assistant, focusing only on recent Edmonton Residential Properties. It combines a Next.js chat interface, a FastAPI backend, Gemini-powered (3.1 flash) intent routing and PDF property-detail parser, a LightGBM quantile valuation and comparable sale ranking model.
 
 The [core demo video flow](https://www.loom.com/share/cf1f0c5306744f4cb76b0fb81306c374) is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
 
@@ -58,6 +58,11 @@ GOOGLE_API_KEY=your_google_api_key_here
 The backend loads this file from the project root. Without the key, `api/config.py` raises an error at startup.
 
 ## Backend Setup
+
+```
+git clone https://github.com/xuanvietchu/Cap-Comps
+cd Cap-Comps
+```
 
 From the repository root:
 
