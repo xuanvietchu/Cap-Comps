@@ -111,21 +111,6 @@ The frontend currently calls the backend at `http://localhost:8000/chat/stream`.
 
 See [docs/API.md](docs/API.md) for endpoint details, request and response examples, streaming event format, and important response fields.
 
-## Development Checks
-
-Backend syntax check:
-
-```powershell
-python -m py_compile api/comps_service.py api/agent.py api/main.py api/schemas.py api/tools/comps_tools.py
-```
-
-Frontend lint:
-
-```powershell
-cd app
-npm run lint
-```
-
 ## A few Notes
 
 The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model.
@@ -152,6 +137,7 @@ The goal of this component is to build a machine learning model that predicts re
 
 - Scraped, cleaned, and consolidated approximately **7,000 Edmonton residential property sales** from **December 2025 to May 2026**.
 - Data collection and preparation accounted for roughly **40% of the total project effort**.
+- If you would like my data to run the app locally yourself, please contact me directly at `vchu1@ualberta.ca`.
 
 ### Features
 
@@ -265,8 +251,8 @@ These explanations are then summarized using Gemini.
 Tradeoffs:
 
 - The more trees being passed into Gemini, the better the explanation will be.
-- This come at the cost of response time from Gemini
-- For a 10 minutes demo, only the top 5 most similar trees out of 300 trees are passed into Gemini.
+- This come at the cost of tokens from Gemini
+- For a 10 minutes demo, only the top 30 most similar trees out of 300 between comparables pairs are passed into Gemini.
 
 ### Baseline for Future Work
 

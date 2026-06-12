@@ -101,36 +101,3 @@ def quantile_model():
 def price_shap_explainer():
     """Create the cached tree explainer used for price-driver explanations."""
     return shap.TreeExplainer(quantile_model())
-
-
-def model_overview_text() -> str:
-    metrics = load_metrics()
-    valid = metrics.get("valid", {})
-    test = metrics.get("test", {})
-
-    lines = [
-        "Model overview:",
-        "This project uses a LightGBM quantile pipeline that predicts a low / median / high price band.",
-        "The median prediction is the main estimate, and the interval width is used as uncertainty.",
-    ]
-
-    if valid:
-        lines.append(
-            f"Validation performance: MAE {format_currency(valid.get('MAE'))}, "
-            f"RMSLE {format_number(valid.get('RMSLE'), 3)}, "
-            f"median absolute error {format_currency(valid.get('MedianAE'))}."
-        )
-    if test:
-        lines.append(
-            f"Test performance: MAE {format_currency(test.get('MAE'))}, "
-            f"RMSLE {format_number(test.get('RMSLE'), 3)}, "
-            f"median absolute error {format_currency(test.get('MedianAE'))}."
-        )
-
-    lines.append(
-        "The model leans on location, size, age, house style, basement finish, exterior and finish flags, and market timing."
-    )
-    lines.append(
-        "Comp ranking uses a combined similarity score, while distance, square footage, and year tolerances are applied separately."
-    )
-    return " ".join(lines)
