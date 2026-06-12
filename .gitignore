@@ -116,7 +116,6 @@ models
 *.pb
 *.weights
 *.bin
-*.json
 model_snapshots/
 
 # ==========================================
