@@ -23,6 +23,7 @@ KV/
   api/                 FastAPI service, Gemini client, agent orchestration, schemas
   api/tools/           Model loading, valuation, comp ranking, explanations, CSV export
   app/                 Next.js chat frontend
+  docs/API.md          API reference
 
 ├── Data Science Layer
   data/train/train.csv Training dataset used by the model and comp lookup
@@ -31,7 +32,6 @@ KV/
   clean/               Data cleaning utilities and intermediate work
   eval/                Evaluation utilities
   scraper/             Data collection utilities
-  docs/API.md          API reference
 ```
 
 ## System Design
@@ -48,6 +48,8 @@ KV/
 - Whole dataset at `data/train/data.csv`
 
 ## Environment Setup
+
+Create a [Gemini api key](https://ai.google.dev/gemini-api/docs/api-key)
 
 Create a root `.env` file:
 
@@ -67,6 +69,7 @@ cd Cap-Comps
 From the repository root:
 
 ```powershell
+python -m pip install --upgrade pip
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
