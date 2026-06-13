@@ -44,8 +44,7 @@ KV/
 - npm version >= 10.2.4
 - A Google Gemini API key
 - Local model artifact at `models/house_price_lgbm_pipeline.joblib` ([Download](https://drive.google.com/drive/folders/1Xmp_OEdOtyWBeikViou4VG41tqgTcoGf?usp=sharing))
-- Training data at `data/train/train.csv`(to download these datasets to run the app, please contact me directly at `vchu1@ualberta.ca`.)
-- Whole dataset at `data/train/data.csv`
+- Datasets at `data/train/train.csv``data/train/data.csv` (Download link in submission notes)
 
 ## Environment Setup
 
@@ -144,7 +143,6 @@ The goal of this component is to build a machine learning model that predicts re
 ### Data Collection
 
 - Scraped, cleaned, and consolidated approximately **7,000 Edmonton residential property sales** from **December 2025 to April 2026**.
-- Data collection and preparation accounted for roughly **40% of the total project effort**.
 
 ### Features
 
