@@ -122,7 +122,7 @@ See [docs/API.md](docs/API.md) for endpoint details, request and response exampl
 
 The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model.
 
-The scope of this project blown way out of my imagination, mainly due to me synthesizing my own data. I cannot find a high quality free public dataset that present a realistic enough situation (for house pricing). The product can only be as good as the data itself, so I scraped my own data.
+I cannot find a high quality free public dataset that present a realistic enough situation (for house pricing). The product can only be as good as the data itself, so I scraped my own data.
 
 Also, I decided to skip the Commercial Case, simply because the data was lacking in both size and richness of information (sparse, missing cols) for me to understand the case study.
 
