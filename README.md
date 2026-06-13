@@ -40,6 +40,11 @@ KV/
 
 ## Requirements
 
+```
+git clone https://github.com/xuanvietchu/Cap-Comps
+cd Cap-Comps
+```
+
 - Python >= 3.12
 - npm version >= 10.2.4
 - A Google Gemini API key
@@ -47,11 +52,6 @@ KV/
 - Datasets at `data/train/train.csv``data/train/data.csv` (Download link in submission notes)
 
 ## Environment Setup
-
-```
-git clone https://github.com/xuanvietchu/Cap-Comps
-cd Cap-Comps
-```
 
 Create a [Gemini api key](https://ai.google.dev/gemini-api/docs/api-key)
 
