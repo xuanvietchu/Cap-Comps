@@ -2,7 +2,7 @@
 
 Capcom is a real estate valuation assistant, focusing only on recent Edmonton Residential Properties. It combines a Next.js chat interface, a FastAPI backend, Gemini-powered (3.1 flash) intent routing and PDF property-detail parser, a LightGBM quantile valuation and comparable sale ranking model.
 
-The core demo flow is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
+The core [video demo flow](https://www.loom.com/share/c4778cb5ebca45eea77f81a8d080e708) is simple: enter or upload property details, ask for a price estimate, request comps, ask why the valuation or comps make sense, then export the comps table as CSV.
 
 ## What It Does
 
