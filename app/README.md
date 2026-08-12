@@ -28,6 +28,8 @@ The backend must also be running at:
 http://localhost:8000
 ```
 
+By default, the browser calls the backend through the Next.js proxy at `/api/backend/*`. The proxy forwards to `http://127.0.0.1:8000`; set `BACKEND_API_BASE_URL` for a different server-side backend URL, or `NEXT_PUBLIC_API_BASE_URL` to bypass the proxy and call a public backend directly.
+
 ## Key Files
 
 - `app/page.tsx`: full-screen application shell.

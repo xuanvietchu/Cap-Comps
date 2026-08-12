@@ -17,23 +17,11 @@ import {
   normalizeMessage,
   STORAGE_KEY,
 } from "./agent-chat/utils";
+import { backendUrl } from "@/lib/backendUrl";
 import ChatSidebar from "./ChatSidebar";
 import EmptyChatState from "./agent-chat/EmptyChatState";
 import HouseDetailsForm from "./HouseDetailsForm";
 import { HouseDetails } from "./houseDetails";
-
-function backendUrl(path: string) {
-  const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (configuredUrl) {
-    return `${configuredUrl.replace(/\/$/, "")}${path}`;
-  }
-
-  const host =
-    typeof window === "undefined" || !window.location.hostname
-      ? "localhost"
-      : window.location.hostname;
-  return `http://${host}:8000${path}`;
-}
 
 export default function AgentChat() {
   const [conversations, setConversations] = useState<Conversation[]>(() =>

@@ -35,6 +35,7 @@ import {
   MultiSelectField,
   SearchableInput,
 } from "./houseFormFields";
+import { backendUrl } from "@/lib/backendUrl";
 
 type ParsedHouseDetailsResponse = {
   details?: Partial<UiHouseDetails>;
@@ -124,20 +125,6 @@ function fileToBase64(file: File) {
     reader.onerror = () => reject(new Error("Could not read the PDF file."));
     reader.readAsDataURL(file);
   });
-}
-
-function backendUrl(path: string) {
-  // Allow deployed demos to point at a hosted API without changing component code.
-  const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (configuredUrl) {
-    return `${configuredUrl.replace(/\/$/, "")}${path}`;
-  }
-
-  const host =
-    typeof window === "undefined" || !window.location.hostname
-      ? "localhost"
-      : window.location.hostname;
-  return `http://${host}:8000${path}`;
 }
 
 export default function HouseDetailsForm({

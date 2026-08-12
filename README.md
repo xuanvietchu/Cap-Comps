@@ -15,23 +15,41 @@ The core demo flow is simple: enter or upload property details, ask for a price 
 - Streams agent trace events so the UI can show what the agent is doing.
 - Exports the latest comps table in a conversation as CSV.
 
+## Architecture: MCP-First with HTTP Adapter
+
+Cap-Comps uses a **Model Context Protocol (MCP) architecture** that serves both HTTP clients (web UI) and stdio clients (LLM integrations like Claude).
+
+**Core Design:**
+
+- **MCP Tools** (`api/mcp/tools.py`) are the single source of truth
+- **MCP Adapter** bridges HTTP requests to MCP tool calls
+- **FastAPI** serves the Next.js frontend via HTTP
+- **MCP Server** exposes tools to LLM clients via stdio
+
+[📖 Read Full Architecture Documentation](docs/MCP_ARCHITECTURE.md)
+
 ## Project Structure
 
 ```text
-KV/
-├── App Layer
-  api/                 FastAPI service, Gemini client, agent orchestration, schemas
-  api/tools/           Model loading, valuation, comp ranking, explanations, CSV export
-  app/                 Next.js chat frontend
-  docs/API.md          API reference
-
+Cap-Comps/
+├── App Layer (MCP-First Architecture)
+│   ├── api/mcp/             MCP server, tools, and schemas (source of truth)
+│   ├── api/mcp_adapter.py   HTTP → MCP bridge for FastAPI
+│   ├── api/main.py          FastAPI HTTP server (uses adapter)
+│   ├── api/                 Gemini client, agent orchestration, conversation state
+│   ├── api/tools/           Model loading, valuation, ranking, explanations, export
+│   └── app/                 Next.js chat frontend
+│
 ├── Data Science Layer
-  data/train/train.csv Training dataset used by the model and comp lookup
-  models/              Trained LightGBM pipeline and metrics
-  train/               Training pipeline code used by the saved model
-  clean/               Data cleaning utilities and intermediate work
-  eval/                Evaluation utilities
-  scraper/             Data collection utilities
+│   ├── data/train/          Training dataset (train.csv)
+│   ├── models/              Trained LightGBM pipeline
+│   ├── train/               Training pipeline
+│   └── clean/, eval/        Data utilities
+│
+└── Documentation
+    ├── README.md            This file
+    ├── docs/MCP_ARCHITECTURE.md    Architecture deep-dive
+    └── docs/API.md          API reference
 ```
 
 ## System Design
@@ -80,11 +98,79 @@ Health check:
 Invoke-RestMethod http://localhost:8000/health
 ```
 
-OpenAPI docs:
+OpenAPI docs (all HTTP endpoints including individual tool endpoints):
 
 ```text
 http://localhost:8000/docs
 ```
+
+## Running the Application
+
+### Full Stack (Recommended for Demo)
+
+```powershell
+# Terminal 1: Start FastAPI backend
+python -m uvicorn api.main:app --reload --port 8000
+
+# Terminal 2: Start Next.js frontend
+cd app
+npm install  # if needed
+npm run dev   # http://localhost:3000
+```
+
+### Using MCP Server (for Claude Integration)
+
+```powershell
+# Terminal 1: Run MCP server (stdio mode)
+python -m api.mcp.server
+
+# Now connect your MCP client (Claude, etc.) to this process
+```
+
+### Individual Tool Endpoints
+
+The FastAPI server exposes all MCP tools as HTTP endpoints for testing or direct integration:
+
+```bash
+# Predict price
+curl -X POST http://localhost:8000/tools/predict-price \
+  -H "Content-Type: application/json" \
+  -d '{"house_details": {"bedrooms": 3, "bathrooms": 2, ...}}'
+
+# Get comps
+curl -X POST http://localhost:8000/tools/get-comps \
+  -H "Content-Type: application/json" \
+  -d '{"house_details": {...}, "top_n": 15}'
+
+# Full chat turn
+curl -X POST http://localhost:8000/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the price?", "house_details": {...}}'
+```
+
+See `docs/API.md` for complete endpoint documentation.
+
+## MCP Integration
+
+The backend exposes the same deterministic valuation, comps, explanation, PDF parsing, CSV export, and full chat-turn capabilities as MCP tools.
+
+**Supported MCP Tools:**
+
+- `predict_price` - Estimate property price band
+- `get_comps` - Find comparable sold homes
+- `explain_price` - Explain price drivers
+- `explain_comps` - Explain why comps match
+- `export_comps_csv` - Export comps as CSV
+- `parse_house_pdf` - Extract details from PDF
+- `run_chat_turn` - Full agent turn with orchestration
+
+**Run MCP Server:**
+
+```powershell
+python -m api.mcp.server
+```
+
+This enables direct LLM integration with Claude and other MCP-compatible clients while keeping the FastAPI/Next.js flow unchanged.
 
 ## Frontend Setup
 
