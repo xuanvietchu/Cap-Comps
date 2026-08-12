@@ -199,22 +199,6 @@ result = adapter.run_chat_turn(
 | **Integration**   | Works with Claude, other LLMs, custom clients |
 | **Maintenance**   | Changes to tool logic propagate everywhere    |
 
-## Migration from Client-Server
-
-### What Changed
-
-- ❌ Removed: Direct `comps_service.build_response()` calls in FastAPI
-- ✅ Added: `MCPAdapter` layer for consistent tool invocation
-- ✅ Added: Individual tool endpoints for granular API access
-- ✅ Enhanced: MCP server documentation and architecture clarity
-
-### What Stayed the Same
-
-- Frontend remains unchanged (Next.js still calls HTTP endpoints)
-- Tool implementations unchanged (logic in `api/tools/`)
-- Database/model loading unchanged
-- Conversation state management unchanged
-
 ## Deployment
 
 ### Development
