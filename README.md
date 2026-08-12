@@ -52,177 +52,79 @@ Cap-Comps/
     └── docs/API.md          API reference
 ```
 
-## System Design
+## Quick Start
 
-![alt text](system.png)
+**Prerequisites:**
 
-## Requirements
+- Python >= 3.12, npm >= 10.2.4
+- Google Gemini API key ([create here](https://ai.google.dev/gemini-api/docs/api-key))
+- Model & datasets ([download](https://drive.google.com/drive/folders/1Xmp_OEdOtyWBeikViou4VG41tqgTcoGf?usp=sharing))
 
-```
-git clone https://github.com/xuanvietchu/Cap-Comps
-cd Cap-Comps
-```
-
-- Python >= 3.12
-- npm version >= 10.2.4
-- A Google Gemini API key
-- Local model artifact at `models/house_price_lgbm_pipeline.joblib` ([Download](https://drive.google.com/drive/folders/1Xmp_OEdOtyWBeikViou4VG41tqgTcoGf?usp=sharing))
-- Datasets at `data/train/train.csv``data/train/data.csv` (Download link in submission notes)
-
-## Environment Setup
-
-Create a [Gemini api key](https://ai.google.dev/gemini-api/docs/api-key)
-
-Create a root `.env` file:
-
-```env
-GOOGLE_API_KEY=your_google_api_key_here
-```
-
-The backend loads this file from the project root. Without the key, `api/config.py` raises an error at startup.
-
-## Backend Setup
-
-From the repository root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m uvicorn api.main:app --reload --port 8000
-```
-
-Health check:
-
-```powershell
-Invoke-RestMethod http://localhost:8000/health
-```
-
-OpenAPI docs (all HTTP endpoints including individual tool endpoints):
-
-```text
-http://localhost:8000/docs
-```
-
-## Running the Application
-
-### Full Stack (Recommended for Demo)
-
-```powershell
-# Terminal 1: Start FastAPI backend
-python -m uvicorn api.main:app --reload --port 8000
-
-# Terminal 2: Start Next.js frontend
-cd app
-npm install  # if needed
-npm run dev   # http://localhost:3000
-```
-
-### Using MCP Server (for Claude Integration)
-
-```powershell
-# Terminal 1: Run MCP server (stdio mode)
-python -m api.mcp.server
-
-# Now connect your MCP client (Claude, etc.) to this process
-```
-
-### Individual Tool Endpoints
-
-The FastAPI server exposes all MCP tools as HTTP endpoints for testing or direct integration:
+**Setup:**
 
 ```bash
-# Predict price
-curl -X POST http://localhost:8000/tools/predict-price \
-  -H "Content-Type: application/json" \
-  -d '{"house_details": {"bedrooms": 3, "bathrooms": 2, ...}}'
+# Clone and install
+git clone https://github.com/xuanvietchu/Cap-Comps
+cd Cap-Comps
+python -m venv .venv
+.venv\Scripts\activate  # Windows; use `source .venv/bin/activate` on macOS/Linux
+pip install -r requirements.txt
 
-# Get comps
-curl -X POST http://localhost:8000/tools/get-comps \
-  -H "Content-Type: application/json" \
-  -d '{"house_details": {...}, "top_n": 15}'
-
-# Full chat turn
-curl -X POST http://localhost:8000/chat/stream \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is the price?", "house_details": {...}}'
+# Create .env with your API key
+echo GOOGLE_API_KEY=your_key_here > .env
 ```
 
-See `docs/API.md` for complete endpoint documentation.
+**Run:**
 
-## MCP Integration
+```bash
+# Terminal 1: Backend
+python -m uvicorn api.main:app --reload --port 8000
 
-The backend exposes the same deterministic valuation, comps, explanation, PDF parsing, CSV export, and full chat-turn capabilities as MCP tools.
-
-**Supported MCP Tools:**
-
-- `predict_price` - Estimate property price band
-- `get_comps` - Find comparable sold homes
-- `explain_price` - Explain price drivers
-- `explain_comps` - Explain why comps match
-- `export_comps_csv` - Export comps as CSV
-- `parse_house_pdf` - Extract details from PDF
-- `run_chat_turn` - Full agent turn with orchestration
-
-**Run MCP Server:**
-
-```powershell
-python -m api.mcp.server
+# Terminal 2: Frontend
+cd app && npm install && npm run dev
 ```
 
-This enables direct LLM integration with Claude and other MCP-compatible clients while keeping the FastAPI/Next.js flow unchanged.
+Open http://localhost:3000 in your browser.
 
-## Frontend Setup
+**Full setup details:** See [QUICKSTART.md](QUICKSTART.md) for extended setup and usage options (MCP server, individual tools, etc.).
 
-In a second terminal:
+## Documentation
 
-```powershell
-cd app
-npm install
-npm run dev
-```
+- **[docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md)** — Complete architecture guide, data flows, and integration patterns
+- **[QUICKSTART.md](QUICKSTART.md)** — Extended setup, development workflow, and troubleshooting
+- **[docs/API.md](docs/API.md)** — HTTP endpoint reference, examples, and response schemas
 
-Open:
+## Technical Notes
 
-```text
-http://localhost:3000
-```
+The system combines two major components:
 
-The frontend currently calls the backend at `http://localhost:8000/chat/stream`.
+**AI Agent (LLM Orchestration):**
 
-## Demo Script
+- Tool-driven architecture with Gemini (3.1 Flash) for intent routing
+- Streaming agent trace events for real-time UI feedback
+- Conversation state management across turns
+- PDF property detail parsing
 
-1. Start the backend and frontend.
-2. Open the web app and create a new chat.
-3. Enter property details manually or upload a PDF.
-4. Ask: `What is this house worth?`
-5. Ask: `Show me the top 10 comps.`
-6. Ask: `Why were <insert_address> selected as a comp?`
-7. Ask: `Export the top 10 comps as CSV.`
+**Data Science (Valuation & Comps Matching):**
 
-## API Documentation
+- LightGBM quantile regression model for price prediction
+- SHAP feature importance for explainability
+- Comp matching via model leaf similarity and price-per-sqft comparison
+- ~7,000 Edmonton residential properties (Dec 2025 – Apr 2026)
 
-See [docs/API.md](docs/API.md) for endpoint details, request and response examples, streaming event format, and important response fields.
+The strongest technical pieces are the LightGBM comp similarity ranking and quantile price prediction with SHAP explanations.
 
-## A few Notes
+---
 
-The strongest technical pieces are the LightGBM comp similarity and quantile price prediction, SHAP explainer, tool-driven agent contract, and streaming trace UI. Essentially, this is 2 projects in 1: a Data Science project for Comps Matches and Feature Engineering; and AI Agent for intent detection, tool usage, and synthesizing comps and pricing explanation from raw tree model.
+# Optional: Data Science Deep Dive
 
-I cannot find a high quality free public dataset that present a realistic enough situation (for house pricing). The product can only be as good as the data itself, so I scraped my own data.
-
-Also, I decided to skip the Commercial Case, simply because the data was lacking in both size and richness of information (sparse, missing cols) for me to understand the case study.
-
-I also decided to intentionally leave out key files within the `\scraper` folder and some other files within the context of the Data Science Project. This decision was made to avoid data leakage of relevant individuals and corporations involved.
-
-# 1. Data Science
+_This section provides technical details about the valuation model and data science approach. For architecture and integration details, see [docs/MCP_ARCHITECTURE.md](docs/MCP_ARCHITECTURE.md)._
 
 ## Motivation
 
 A good valuation model implicitly learns which property characteristics drive house prices. If a model can accurately estimate a property's value, that same understanding can be leveraged to identify comparable properties (comps) that share similar valuation drivers.
 
 The goal of this component is to build a machine learning model that predicts residential sale prices and serves as a foundation for comps discovery.
-
----
 
 ## Dataset & Feature Engineering
 
