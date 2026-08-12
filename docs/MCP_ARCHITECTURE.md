@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cap-Comps has been refactored from a traditional client-server architecture to an **MCP-first design with HTTP adapter**. This enables seamless integration with both LLM clients (via MCP stdio) and web frontends (via HTTP).
+Cap-Comps is an **MCP-first design with HTTP adapter**. This enables seamless integration with both LLM clients (via MCP stdio) and web frontends (via HTTP).
 
 ## Architecture Diagram
 
